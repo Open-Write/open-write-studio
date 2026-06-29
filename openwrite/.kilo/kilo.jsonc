@@ -1,0 +1,13 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "instructions": [
+    "skills/start_here.md"
+  ],
+  "mcp": {
+    "openwrite-state": {
+      "type": "local",
+      "command": ["node", "tools/state_server/index.js"],
+      "enabled": true
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "tracks": [
+    {
+      "name": "example_track",
+      "description": "What the audience believes about [X] at each point in the story",
+      "phases": [
+        {
+          "scenes": "1-N",
+          "audience_belief": "What the audience believes in this phase",
+          "guidance": "How the writer should manage this belief"
+        }
+      ]
+    }
+  ]
+}

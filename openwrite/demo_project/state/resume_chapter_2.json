@@ -1,0 +1,38 @@
+{
+  "chapter": 2,
+  "status": "complete",
+  "timestamp": "2026-06-06T20:10:00-04:00",
+  "word_count": 5081,
+  "next_chapter": 3,
+  "next_chapter_title": "First Blood",
+  "prior_chapter_tail": "He knew the road. He knew the beret.",
+  "callback_state": {
+    "crucifix_01": "seeded — in Martín's pocket, touched in church after Santiago Mass",
+    "red_beret_01": "seeded — on Martín's head",
+    "scapular_01": "seeded — worn cord visible on Tomás",
+    "don_eusebio_silence_01": "seeded — step back at fountain",
+    "padre_joaquin_blessings_01": "seeded — Santiago Mass, pastoral certainty",
+    "tell_my_mother_01": "seeded — Tomás's mother referenced",
+    "meseta_motif": "seeded — the flat land as moral mirror",
+    "vidal_competence": "seeded — professional authority introduced",
+    "don_eusebio_letters": "seeded — first letter short, factual",
+    "tomas_pragmatism": "seeded — 'We fight. We win. We go home.'"
+  },
+  "convention_state": {
+    "body_anchors_used": ["eyes (primary)", "breath", "heat", "crucifix touch"],
+    "sentence_rhythm": ["polysyndeton (monitor)", "anaphoric triplets (reduced)"],
+    "voice_techniques_used": ["immediacy collapse", "grounding location", "writing-as-reckoning frame"]
+  },
+  "reader_state": {
+    "phase": "misdirection_active",
+    "belief": "Reader believes this is a war story. The coalition's breadth is interesting, not threatening."
+  },
+  "timeline_position": "July 23 – August 15, 1936 — marching through Castile",
+  "character_states": {
+    "martin": "billeted in Castilian village, crucifix in pocket, beret on head, beginning to sense the coalition's breadth",
+    "don_eusebio": "in Pamplona — sent first short letter",
+    "tomas": "beside Martín, pragmatism intact, 'We fight. We win. We go home.'",
+    "padre_joaquin": "with the battalion, said Santiago Mass",
+    "vidal": "introduced — professional, competent, organizing the requeté"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "description": "Tracks character state across episodes — knowledge, relationships, physical state, emotional register activity. Updated after each episode is locked. Critical for cross-episode continuity.",
+  "characters": {
+    "example_character": {
+      "name": "Example Character",
+      "role": "series_regular|recurring|guest",
+      "first_appearance": "S01E01",
+      "knowledge_state": {
+        "S01E01": {
+          "knows": ["List of things this character knows at end of episode"],
+          "does_not_know": ["List of things this character does not know"],
+          "believes_falsely": ["Things the character believes that are wrong"]
+        }
+      },
+      "physical_state": {
+        "S01E01": {
+          "injuries": [],
+          "illnesses": [],
+          "sleep_state": "normal|deprived|exhausted",
+          "substances": [],
+          "notes": "Any relevant physical state"
+        }
+      },
+      "relationship_state": {
+        "S01E01": {
+          "other_character": "description of relationship state at end of episode"
+        }
+      },
+      "voice_register_activity": {
+        "S01E01": {
+          "dominant_register": "Which voice register was most active this episode",
+          "register_shifts": ["Description of emotional register transitions that occurred"],
+          "notes": "Any voice-relevant observations"
+        }
+      },
+      "emotional_state": {
+        "S01E01": "Brief description of emotional state at episode end"
+      }
+    }
+  },
+  "relationship_matrix": {
+    "description": "Tracks the state of all significant relationships. Updated after each episode.",
+    "relationships": {}
+  }
+}

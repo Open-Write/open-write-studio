@@ -1,0 +1,16 @@
+{
+  "chapter": 8,
+  "status": "complete",
+  "timestamp": "2026-06-07T21:18:00-04:00",
+  "word_count": 4102,
+  "next_chapter": 9,
+  "next_chapter_title": "The Fallen Oak",
+  "prior_chapter_tail": "The bird sang again. The sun was on the mountains.",
+  "timeline_position": "July 1937 — occupied Basque town",
+  "character_states": {
+    "martin": "holds alphabet chart in jacket, cannot answer Amaia, saw dying Basque soldier",
+    "amaia": "departed — walked through streets of town that was no longer hers",
+    "tomas": "said 'She's right' — evening, looking at mountains",
+    "padre_joaquin": "gave last rites to dying Basque soldier, walked away without speaking"
+  }
+}

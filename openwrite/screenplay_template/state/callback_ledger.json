@@ -1,0 +1,11 @@
+{
+  "seeds": [
+    {
+      "id": "example_seed",
+      "seeded_in_scene": 1,
+      "must_pay_off_by_scene": 10,
+      "paid_off": false,
+      "payoff_description": "Description of what the payoff looks like when it occurs"
+    }
+  ]
+}

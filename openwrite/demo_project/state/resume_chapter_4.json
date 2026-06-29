@@ -1,0 +1,34 @@
+{
+  "chapter": 4,
+  "status": "complete",
+  "timestamp": "2026-06-07T03:42:00-04:00",
+  "word_count": 4205,
+  "next_chapter": 5,
+  "next_chapter_title": "The Yoke and the Arrows",
+  "prior_chapter_tail": "The artillery found its rhythm. The dark held everything.",
+  "callback_state": {
+    "crucifix_01": "seeded — held in hands at night in Madrid",
+    "red_beret_01": "seeded — on Martín's head",
+    "scapular_01": "seeded — passive on Tomás's chest while sleeping (under-delivered)",
+    "don_eusebio_silence_01": "seeded",
+    "padre_joaquin_blessings_01": "seeded — blessing the dead from failed assault",
+    "tell_my_mother_01": "seeded",
+    "meseta_motif": "seeded — Madrid replaces meseta",
+    "vidal_competence": "seeded — delivers news without decoration",
+    "don_eusebio_letters": "seeded — letters referenced",
+    "tomas_pragmatism": "seeded — 'At least they're on our side.'",
+    "first_kill": "seeded — recurring",
+    "body_prayer": "seeded — prayer returns at night in Madrid",
+    "shaking_stopping": "seeded — numbness advancing",
+    "army_of_africa": "seeded — Regulares, Legionnaires introduced",
+    "failed_assault": "seeded — dream of quick victory dies",
+    "sounds_of_madrid": "seeded — artillery heartbeat, machine-gun breath"
+  },
+  "timeline_position": "November 1936 — outskirts of Madrid",
+  "character_states": {
+    "martin": "at Madrid outskirts, heard first major battle, saw Army of Africa, held crucifix at night",
+    "tomas": "beside Martín, pragmatic about Regulares ('At least they're on our side')",
+    "padre_joaquin": "blessed the dead from failed assault — same blessing, different bodies",
+    "vidal": "delivered news of assault failure without decoration"
+  }
+}

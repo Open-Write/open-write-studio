@@ -1,0 +1,31 @@
+# THE RED BERET — Character Profile: Teniente Rodrigo Vidal
+
+*When writing a scene with Vidal, load this file plus the profiles of other characters in the scene. Always load [`../07_format_rules.md`](../07_format_rules.md) alongside.*
+
+---
+
+### Teniente Rodrigo Vidal — 31, professional Army officer, battalion second-in-command
+
+**Backstory.** Born 1905 in Burgos. Son of a career Army officer (a captain who served in Morocco). Attended the Infantry Academy at Toledo. Commissioned in 1925. Served in the Rif War (Morocco, 1925–1927) — the brutal colonial campaign where the Spanish Army, aided by France, crushed the Berber rebellion led by Abd el-Krim. Vidal saw real combat in the mountains of the Rif — ambushes, casualties, the efficient application of violence. He learned soldiering not as ideology but as craft: terrain, logistics, fire discipline, the management of men under stress. He was promoted to teniente (lieutenant) in 1930. When the Republic was declared in 1931, he kept his head down — the Army was purged of monarchist officers, and Vidal was not political enough to be purged. When the uprising came in July 1936, he joined the Nationalists because his garrison (Pamplona) joined the Nationalists. He is not a Carlist. He is not a Falangist. He is a professional soldier who fights for the side his garrison chose. He commands the requeté battalion's regular army component — the conscripts and professional soldiers who fight alongside the Carlist volunteers. He respects the requeté's courage. He does not understand their faith.
+
+**Voice registers.**
+
+- **Register 1: The Officer.** Clipped, precise, professional. The voice of a man who has spent ten years giving orders. Short sentences. Military vocabulary. Surfaces in the field — giving orders, planning operations, evaluating terrain. "We hold here. Dig in. No one advances without my order." This register is not harsh — it is efficient. Vidal does not waste words because wasted words get men killed.
+
+- **Register 2: The Castilian.** Drier, more reflective, with a Castilian's directness. Surfaces in private moments — with Martín, with the other officers. He does not share the requeté's faith, but he is curious about it. "Your men believe. That is useful. I have never believed. I have only fought." This register reveals a man who is competent and lonely — competent at war, lonely in the absence of any cause larger than the craft of soldiering.
+
+- **Register 3: The Realist.** Flat, uninflected, factual. Surfaces when the military situation is bad and Vidal must deliver bad news. No hedging, no comfort. "We lost forty men. The position is untenable. We retreat at dawn." This register is the one the requeté fear — not because it is cruel, but because it is honest in a way that ideology cannot absorb.
+
+**Voice characteristics.** Vidal speaks in Castilian Spanish — flat, clear, without the Navarrese inflection of the Carlists. He does not use dialect, invocations, or ideology. He says "mierda" and "hostia" without flinching — the language of a professional soldier. He addresses the requeté by rank, not by name — not from coldness but from the military habit of maintaining distance between officers and volunteers. He does not argue about God, king, or the fueros. He says: "The terrain decides. The enemy decides. We adapt." When Martín speaks about the crusade, Vidal listens and says nothing.
+
+**What other characters see in them.** Martín sees a professional — a man who knows his craft and does it well. He respects Vidal without understanding him. Vidal has no faith, no king, no fueros — and yet he is a better soldier than any of the requeté. This is a quiet challenge to Martín's worldview: if a man without faith can be brave and competent and honorable, what does faith add? Tomás sees an officer — competent, fair, not cruel. The requeté follow Vidal's orders because they trust his competence, not because they share his beliefs. Salazar sees a military man — useful, non-ideological, the kind of officer Franco prefers because he will not challenge the Caudillo.
+
+**Physical description.** Tall, lean, angular face. Dark eyes that are always scanning — terrain, men, weather. He wears the Army officer's uniform without the Carlist or Falangist embellishments. His boots are always polished. His hands are the hands of a man who has cleaned a thousand rifles. He moves with the economy of a professional soldier — no wasted motion, no display. He carries a map case and binoculars. He does not wear a beret — he wears the officer's cap.
+
+**Arc.** Vidal does not have a transformation arc. He is the same man at the end as at the beginning — professional, competent, non-ideological. His function in the novel is to represent the military reality that the requeté's faith operates within. He is the ground beneath the ideology: the terrain, the logistics, the enemy. In Act I, he is the professional who organizes the requeté's raw courage into something militarily effective. In Act II, he navigates the unification without comment — it is a political matter, not a military one. In Act III, he fights the northern campaign with professional efficiency — and the requeté's moral crisis does not touch him. He fights Basque Nationalists because they are the enemy, not because of the fueros. In Act IV, at the Ebro, he holds the line because that is what officers do. He survives the war. In Act V, he is reassigned to a garrison in Burgos. He does not attend the victory parade. He is not bitter and he is not relieved. He is a soldier between wars.
+
+**The key turning point.** Vidal does not have a turning point. His constancy is the point. He is the novel's reminder that the war is also a military event — that beyond the theology, the politics, and the moral crises, there is terrain to be held, men to be fed, and the enemy to be fought. His competence is a rebuke to ideology without being a statement about it.
+
+---
+
+*Vidal is the novel's military conscience — not a moral conscience (that is Padre Joaquín's role) but a practical one. He grounds the novel in the reality of war: the decisions that have nothing to do with faith and everything to do with survival. His presence ensures that the novel's moral and theological questions do not float free of the physical reality of men in trenches.*

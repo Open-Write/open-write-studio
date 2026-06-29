@@ -1,0 +1,34 @@
+﻿{
+  "project": "The Red Beret",
+  "phase": "COMPLETE — First Draft",
+  "status": "DONE",
+  "timestamp": "2026-06-08T07:30:00-04:00",
+  "chapters_completed": [
+    {"chapter": 1, "title": "The Red Beret", "word_count": 4210},
+    {"chapter": 2, "title": "The March South", "word_count": 5081},
+    {"chapter": 3, "title": "First Blood", "word_count": 4257},
+    {"chapter": 4, "title": "The Siege", "word_count": 4205},
+    {"chapter": 5, "title": "The Yoke and the Arrows", "word_count": 4637},
+    {"chapter": 6, "title": "The Field of Jarama", "word_count": 3844},
+    {"chapter": 7, "title": "The Basque Country", "word_count": 4251},
+    {"chapter": 8, "title": "The Schoolteacher", "word_count": 4102},
+    {"chapter": 9, "title": "The Fallen Oak", "word_count": 4418},
+    {"chapter": 10, "title": "The Cold", "word_count": 4395},
+    {"chapter": 11, "title": "The Homecoming", "word_count": 3845},
+    {"chapter": 12, "title": "The River", "word_count": 4477},
+    {"chapter": 13, "title": "The Chaplain's Confession", "word_count": 3721},
+    {"chapter": 14, "title": "The End", "word_count": 3204},
+    {"chapter": 15, "title": "The Altar", "word_count": 3787}
+  ],
+  "total_word_count": 62434,
+  "assembled_word_count": 62437,
+  "assembled_file": "manuscript/novel.md",
+  "estimated_pages": 250,
+  "acts": {
+    "Act One (Ch1-3)": "Conviction — the crusade begins",
+    "Act Two (Ch4-6)": "The advance — Madrid, unification, Jarama",
+    "Act Three (Ch7-9)": "The moral catastrophe — Basque Country",
+    "Act Four (Ch10-12)": "Attrition — Teruel, homecoming, Ebro",
+    "Act Five (Ch13-15)": "Silence — confession, victory, the altar"
+  }
+}

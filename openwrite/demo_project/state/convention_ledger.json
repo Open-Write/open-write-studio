@@ -1,0 +1,20 @@
+﻿{
+  "project": "The Red Beret",
+  "conventions": [],
+  "body_anchor_history": {
+    "hands": [],
+    "eyes": [],
+    "breath": [],
+    "spine": [],
+    "jaw": [],
+    "feet": [],
+    "shoulders": [],
+    "knees": []
+  },
+  "sentence_rhythm_patterns": [],
+  "dialogue_attribution": {
+    "said": 0,
+    "asked": 0,
+    "other": 0
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "mcp": {
+    "qg-state": {
+      "type": "local",
+      "command": ["node", "tools/state_server/index.js"],
+      "enabled": true
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "chapter": 7,
+  "status": "complete",
+  "timestamp": "2026-06-07T19:47:00-04:00",
+  "word_count": 4251,
+  "next_chapter": 8,
+  "next_chapter_title": "The Schoolteacher",
+  "prior_chapter_tail": "repeating them until my mouth could hold them.",
+  "timeline_position": "June 1937 — Basque Country, after fall of Bilbao",
+  "character_states": {
+    "martin": "in occupied Basque town, saw crucifix/ikurriña/alphabet chart, moral catastrophe visible",
+    "tomas": "beside Martín, pragmatic as always",
+    "padre_joaquin": "said Mass to requeté and townspeople, 'I do not know how to hold both in one hand'",
+    "vidal": "background"
+  }
+}

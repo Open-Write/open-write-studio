@@ -1,0 +1,69 @@
+{
+  "generated_at": null,
+  "manuscript_word_count": 0,
+  "chapter_count": 0,
+  "sentence_openers": {
+    "targets": {
+      "subject_first": "40-50%",
+      "prepositional": "10-15%",
+      "participial": "5-10%",
+      "adverbial": "3-5%",
+      "conjunction": "2-4%"
+    },
+    "global_counts": {},
+    "global_percentages": {},
+    "per_chapter": {}
+  },
+  "body_anchors": {
+    "targets_per_chapter": {
+      "hands_fingers": "<=2",
+      "jaw_teeth": "<=1",
+      "throat_tongue": "<=1",
+      "feet_legs": "<=1",
+      "shoulders_neck": "<=1",
+      "eyes": "<=2",
+      "breathing": "<=1",
+      "temperature": "<=2"
+    },
+    "global_counts": {},
+    "per_chapter": {},
+    "flags": []
+  },
+  "sentence_structures": {
+    "targets": {
+      "short_declarative": "15-25%",
+      "compound": "20-30%",
+      "complex_subordinate": "20-30%",
+      "em_dash": "5-8%"
+    },
+    "global_counts": {},
+    "global_percentages": {},
+    "per_chapter": {}
+  },
+  "interiority_methods": {
+    "targets": {
+      "physical_behavior": "60%+",
+      "what_character_notices": "20-30%",
+      "what_character_does_not_do": "5-10%",
+      "direct_thought": "2-3%"
+    },
+    "global_counts": {},
+    "global_percentages": {},
+    "per_chapter": {}
+  },
+  "scene_endings": {
+    "targets": {
+      "image": "preferred",
+      "action": "acceptable",
+      "dialogue": "5% max",
+      "she_did_not_sleep": "BANNED after first use"
+    },
+    "global_counts": {},
+    "per_chapter": {}
+  },
+  "flags": {
+    "physical_tic_overuse": [],
+    "verbatim_phrase_repetition": [],
+    "scene_ending_pattern_repetition": []
+  }
+}

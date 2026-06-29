@@ -1,0 +1,854 @@
+{
+  "status": "INCOMPLETE",
+  "project_name": "demo_project",
+  "timestamp": "2026-06-15T13:03:38.047978",
+  "manuscript_sha256": "906b532cfb1ca158524e2b682bf181467174179fe52edbb9902ca6a8dd3d5779",
+  "verify": {
+    "verdict": "FAIL",
+    "error": "Could not parse verify_completion output",
+    "raw_stdout": "FAIL: No completion_manifest.json found.\n  Searched: ['C:\\\\Open-Write\\\\demo_project\\\\state\\\\completion_manifest.json', 'C:\\\\Open-Write\\\\demo_project\\\\completion_manifest.json']\n",
+    "raw_stderr": "",
+    "items_checked": 0,
+    "items_passed": 0,
+    "items_failed": 0,
+    "failures": [
+      "verify_completion parse error"
+    ]
+  },
+  "lints": [
+    {
+      "name": "hollow_critics",
+      "level": "PROSE",
+      "blocking": true,
+      "status": "FAIL",
+      "findings": [
+        {
+          "file": "001_the_red_beret_prose_audit.md",
+          "words": 269,
+          "located_findings": 3,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "002_the_march_south_prose_audit.md",
+          "words": 419,
+          "located_findings": 12,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "003_first_blood_prose_audit.md",
+          "words": 1287,
+          "located_findings": 4,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "004_the_siege_prose_audit.md",
+          "words": 510,
+          "located_findings": 2,
+          "has_chapter_hash": false,
+          "reason": "below 3 located findings (2); missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "005_the_yoke_and_the_arrows_prose_audit.md",
+          "words": 1615,
+          "located_findings": 9,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "006_the_field_of_jarama_prose_audit.md",
+          "words": 944,
+          "located_findings": 4,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "007_the_basque_country_prose_audit.md",
+          "words": 360,
+          "located_findings": 1,
+          "has_chapter_hash": false,
+          "reason": "below 3 located findings (1); missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "008_the_schoolteacher_prose_audit.md",
+          "words": 431,
+          "located_findings": 7,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "009_the_fallen_oak_prose_audit.md",
+          "words": 499,
+          "located_findings": 3,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "010_the_cold_prose_audit.md",
+          "words": 688,
+          "located_findings": 9,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_10_continuity.md",
+          "words": 2141,
+          "located_findings": 61,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_10_palette.md",
+          "words": 1535,
+          "located_findings": 25,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_10_plan.md",
+          "words": 461,
+          "located_findings": 5,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_10_show_dont_tell.md",
+          "words": 2455,
+          "located_findings": 48,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_11_continuity.md",
+          "words": 1885,
+          "located_findings": 63,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_11_naturalism.md",
+          "words": 840,
+          "located_findings": 39,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_11_palette.md",
+          "words": 1306,
+          "located_findings": 30,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_11_plan.md",
+          "words": 476,
+          "located_findings": 9,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_11_show_dont_tell.md",
+          "words": 2283,
+          "located_findings": 89,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_12_continuity.md",
+          "words": 1429,
+          "located_findings": 48,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_12_naturalism.md",
+          "words": 2158,
+          "located_findings": 111,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_12_palette.md",
+          "words": 1656,
+          "located_findings": 40,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_12_plan.md",
+          "words": 446,
+          "located_findings": 5,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_12_show_dont_tell.md",
+          "words": 2089,
+          "located_findings": 79,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_13_continuity.md",
+          "words": 1695,
+          "located_findings": 54,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_13_naturalism.md",
+          "words": 1573,
+          "located_findings": 28,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_13_palette.md",
+          "words": 1508,
+          "located_findings": 26,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_13_plan.md",
+          "words": 500,
+          "located_findings": 10,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_13_show_dont_tell.md",
+          "words": 2325,
+          "located_findings": 54,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_13_voice.md",
+          "words": 1831,
+          "located_findings": 56,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_14_continuity.md",
+          "words": 1819,
+          "located_findings": 62,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_14_naturalism.md",
+          "words": 1361,
+          "located_findings": 70,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_14_palette.md",
+          "words": 1744,
+          "located_findings": 15,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_14_plan.md",
+          "words": 359,
+          "located_findings": 4,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_14_show_dont_tell.md",
+          "words": 2280,
+          "located_findings": 111,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_14_voice.md",
+          "words": 1845,
+          "located_findings": 67,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_15_continuity.md",
+          "words": 1346,
+          "located_findings": 37,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_15_naturalism.md",
+          "words": 1349,
+          "located_findings": 74,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_15_palette.md",
+          "words": 1800,
+          "located_findings": 14,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_15_plan.md",
+          "words": 669,
+          "located_findings": 9,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_15_show_dont_tell.md",
+          "words": 1368,
+          "located_findings": 27,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_15_voice.md",
+          "words": 2111,
+          "located_findings": 99,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_1_continuity.md",
+          "words": 2451,
+          "located_findings": 124,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_1_naturalism.md",
+          "words": 2169,
+          "located_findings": 96,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_1_palette.md",
+          "words": 2719,
+          "located_findings": 57,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_1_plan.md",
+          "words": 2163,
+          "located_findings": 15,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_1_show_dont_tell.md",
+          "words": 3269,
+          "located_findings": 76,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_1_voice.md",
+          "words": 4240,
+          "located_findings": 117,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_2_continuity.md",
+          "words": 1076,
+          "located_findings": 48,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_2_naturalism.md",
+          "words": 2265,
+          "located_findings": 100,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_2_palette.md",
+          "words": 1871,
+          "located_findings": 35,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_2_plan.md",
+          "words": 1870,
+          "located_findings": 9,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_2_show_dont_tell.md",
+          "words": 1795,
+          "located_findings": 48,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_2_voice.md",
+          "words": 3471,
+          "located_findings": 121,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_3_continuity.md",
+          "words": 2032,
+          "located_findings": 70,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_3_naturalism.md",
+          "words": 3949,
+          "located_findings": 155,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_3_palette.md",
+          "words": 2195,
+          "located_findings": 40,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_3_plan.md",
+          "words": 1790,
+          "located_findings": 6,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_3_show_dont_tell.md",
+          "words": 2009,
+          "located_findings": 31,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_3_voice.md",
+          "words": 3322,
+          "located_findings": 87,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_4_continuity.md",
+          "words": 1458,
+          "located_findings": 40,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_4_naturalism.md",
+          "words": 2522,
+          "located_findings": 134,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_4_palette.md",
+          "words": 3312,
+          "located_findings": 104,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_4_plan.md",
+          "words": 1710,
+          "located_findings": 5,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_4_show_dont_tell.md",
+          "words": 2954,
+          "located_findings": 86,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_4_voice.md",
+          "words": 2693,
+          "located_findings": 89,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_5_continuity.md",
+          "words": 1625,
+          "located_findings": 80,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_5_naturalism.md",
+          "words": 2455,
+          "located_findings": 94,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_5_palette.md",
+          "words": 2220,
+          "located_findings": 48,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_5_plan.md",
+          "words": 1971,
+          "located_findings": 14,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_5_show_dont_tell.md",
+          "words": 1858,
+          "located_findings": 28,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_5_voice.md",
+          "words": 2424,
+          "located_findings": 55,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_6_continuity.md",
+          "words": 2502,
+          "located_findings": 64,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_6_naturalism.md",
+          "words": 1355,
+          "located_findings": 49,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_6_palette.md",
+          "words": 3689,
+          "located_findings": 88,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_6_plan.md",
+          "words": 1333,
+          "located_findings": 5,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_6_show_dont_tell.md",
+          "words": 2113,
+          "located_findings": 60,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_6_voice.md",
+          "words": 2334,
+          "located_findings": 83,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_7_continuity.md",
+          "words": 2683,
+          "located_findings": 69,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_7_naturalism.md",
+          "words": 1436,
+          "located_findings": 44,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_7_palette.md",
+          "words": 1782,
+          "located_findings": 42,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_7_plan.md",
+          "words": 1412,
+          "located_findings": 5,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_7_show_dont_tell.md",
+          "words": 3030,
+          "located_findings": 106,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_7_voice.md",
+          "words": 1323,
+          "located_findings": 64,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_8_continuity.md",
+          "words": 2730,
+          "located_findings": 41,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_8_naturalism.md",
+          "words": 1261,
+          "located_findings": 70,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_8_palette.md",
+          "words": 1348,
+          "located_findings": 39,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_8_plan.md",
+          "words": 888,
+          "located_findings": 11,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_8_show_dont_tell.md",
+          "words": 2353,
+          "located_findings": 85,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_8_voice.md",
+          "words": 3008,
+          "located_findings": 96,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_9_continuity.md",
+          "words": 2204,
+          "located_findings": 115,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_9_naturalism.md",
+          "words": 1483,
+          "located_findings": 67,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_9_palette.md",
+          "words": 2206,
+          "located_findings": 45,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_9_plan.md",
+          "words": 793,
+          "located_findings": 7,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_9_show_dont_tell.md",
+          "words": 2643,
+          "located_findings": 84,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        },
+        {
+          "file": "chapter_9_voice.md",
+          "words": 2435,
+          "located_findings": 92,
+          "has_chapter_hash": false,
+          "reason": "missing chapter_hash (proves critic read the file)"
+        }
+      ],
+      "note": "Length+located-findings+chapter-hash is a backstop and is gameable; real fix is an independent (different-model) critic invocation. chapter_hash proves the critic processed the actual chapter file."
+    },
+    {
+      "name": "round_number_padding",
+      "level": "ARCHITECT",
+      "blocking": true,
+      "status": "PASS",
+      "findings": [],
+      "note": "Detects round-number landings only. 'Editing toward a target' across revisions is visible to the runner (edit history), not to finalize -- gate that in the runner."
+    },
+    {
+      "name": "refrains_and_duplication",
+      "level": "ARCHITECT",
+      "blocking": true,
+      "status": "FAIL",
+      "findings": [
+        {
+          "type": "cross_chapter_refrain",
+          "chapters": [
+            "001_the_red_beret.md",
+            "003_first_blood.md",
+            "004_the_siege.md",
+            "005_the_yoke_and_the_arrows.md",
+            "006_the_field_of_jarama.md",
+            "007_the_basque_country.md",
+            "012_the_river.md"
+          ],
+          "preview": "the pen is in my hand."
+        },
+        {
+          "type": "cross_chapter_refrain",
+          "chapters": [
+            "002_the_march_south.md",
+            "004_the_siege.md",
+            "005_the_yoke_and_the_arrows.md"
+          ],
+          "preview": "the beret was on my head."
+        },
+        {
+          "type": "cross_chapter_refrain",
+          "chapters": [
+            "004_the_siege.md",
+            "009_the_fallen_oak.md",
+            "010_the_cold.md"
+          ],
+          "preview": "he made the sign of the cross."
+        },
+        {
+          "type": "intra_chapter_loop",
+          "chapter": "005_the_yoke_and_the_arrows.md",
+          "count": 4,
+          "preview": "the pin was on the beret."
+        },
+        {
+          "type": "intra_chapter_loop",
+          "chapter": "005_the_yoke_and_the_arrows.md",
+          "count": 4,
+          "preview": "the beret was on the head."
+        },
+        {
+          "type": "cross_chapter_refrain",
+          "chapters": [
+            "007_the_basque_country.md",
+            "008_the_schoolteacher.md",
+            "014_the_end.md"
+          ],
+          "preview": "he did not look at me."
+        },
+        {
+          "type": "cross_chapter_refrain",
+          "chapters": [
+            "013_the_chaplains_confession.md",
+            "014_the_end.md",
+            "015_the_altar.md"
+          ],
+          "preview": "man on the cross, arms out, head down."
+        }
+      ],
+      "note": "Exact-match only. Near-duplicate (fuzzy) detection has false positives and is left advisory; add a Jaccard pass if wanted."
+    },
+    {
+      "name": "negative_construction_density",
+      "level": "PROSE",
+      "blocking": true,
+      "status": "PASS",
+      "findings": [],
+      "note": "Per-chapter only. Aggregate rate can be low while the tell is everywhere; this gate catches spikes, not the fingerprint."
+    },
+    {
+      "name": "em_dash_density",
+      "level": "PROSE",
+      "blocking": false,
+      "status": "WARN",
+      "findings": [
+        {
+          "file": "001_the_red_beret.md",
+          "per_page": 2.2,
+          "unicode_dashes": 37,
+          "ascii_double_hyphens": 0
+        },
+        {
+          "file": "004_the_siege.md",
+          "per_page": 2.0,
+          "unicode_dashes": 34,
+          "ascii_double_hyphens": 0
+        },
+        {
+          "file": "005_the_yoke_and_the_arrows.md",
+          "per_page": 2.4,
+          "unicode_dashes": 44,
+          "ascii_double_hyphens": 0
+        },
+        {
+          "file": "009_the_fallen_oak.md",
+          "per_page": 2.3,
+          "unicode_dashes": 41,
+          "ascii_double_hyphens": 0
+        },
+        {
+          "file": "010_the_cold.md",
+          "per_page": 3.1,
+          "unicode_dashes": 54,
+          "ascii_double_hyphens": 0
+        },
+        {
+          "file": "015_the_altar.md",
+          "per_page": 2.9,
+          "unicode_dashes": 43,
+          "ascii_double_hyphens": 0
+        }
+      ],
+      "note": "Counts both Unicode em-dashes and double-hyphens (--). Agents that substitute -- for — to bypass detection are caught."
+    },
+    {
+      "name": "factual_review",
+      "level": "BIBLE",
+      "blocking": true,
+      "status": "WARN",
+      "findings": [
+        {
+          "reason": "no real_figures.json; cannot verify any named real figure was fact-checked"
+        }
+      ],
+      "note": "Declare real figures in the bible so this can gate."
+    }
+  ],
+  "blocking_lint_failures": [
+    "hollow_critics",
+    "refrains_and_duplication"
+  ],
+  "advisories": [
+    "em_dash_density",
+    "factual_review"
+  ],
+  "produced_by": "tools/finalize.py",
+  "agent_may_not_write_this_file": true
+}

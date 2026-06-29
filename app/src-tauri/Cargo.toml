@@ -1,0 +1,42 @@
+[package]
+name = "open-write"
+version = "1.0.5"
+description = "Open-Write: a local-first Markdown writing app with structured AI-assisted creative writing tools."
+authors = ["Open-Write Contributors"]
+edition = "2021"
+license = "Apache-2.0"
+repository = ""
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+# dialog plugin: gives us native OS folder/file picker dialogs
+# without this, the app would have no way to let the user browse for a folder
+tauri-plugin-dialog = "2"
+# shell plugin: required to spawn the bundled FastAPI backend as a sidecar
+# in release builds. Dev builds skip this and use a manually-launched uvicorn.
+tauri-plugin-shell = "2"
+# updater plugin: checks GitHub Releases on launch for new versions and
+# (with explicit user approval) downloads + installs them in-place.
+tauri-plugin-updater = "2"
+# process plugin: lets the JS layer trigger app restart after an update
+# is installed. Without it the writer would have to manually restart.
+tauri-plugin-process = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+
+
+

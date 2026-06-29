@@ -1,0 +1,18 @@
+{
+  "project": "The Red Beret",
+  "reader_belief_phase": "misdirection_collapsed",
+  "description": "The reader understands the moral catastrophe. The Carlists have fought Catholics for the same fueros. The oak tree is cut down. Don Eusebio's letters are bitter. The king will not come.",
+  "current_act": 3,
+  "misdirection_track": "war_story_to_political_tragedy",
+  "phase_history": [
+    {"chapter": 1, "phase": "misdirection_active"},
+    {"chapter": 2, "phase": "misdirection_active"},
+    {"chapter": 3, "phase": "misdirection_active"},
+    {"chapter": 4, "phase": "misdirection_active"},
+    {"chapter": 5, "phase": "misdirection_cracking"},
+    {"chapter": 6, "phase": "misdirection_cracking"},
+    {"chapter": 7, "phase": "misdirection_collapsed"},
+    {"chapter": 8, "phase": "misdirection_collapsed"},
+    {"chapter": 9, "phase": "misdirection_collapsed"}
+  ]
+}

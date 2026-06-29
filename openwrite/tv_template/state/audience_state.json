@@ -1,0 +1,32 @@
+{
+  "description": "Tracks what the audience believes at each point in the season. Organized by misdirection track and episode phase. See bible/07_craft_feeling.md for misdirection architecture.",
+  "tracks": [
+    {
+      "name": "example_track",
+      "description": "What the audience believes about [X] at each point in the story",
+      "phases": [
+        {
+          "episodes": "S01E01-S01E03",
+          "audience_belief": "What the audience believes in this phase (early season)",
+          "guidance": "How the writer should manage this belief — reinforce the assumption"
+        },
+        {
+          "episodes": "S01E04-S01E06",
+          "audience_belief": "What the audience believes at mid-season (assumption tested)",
+          "guidance": "Introduce details that don't quite fit — the audience should feel uneasy"
+        },
+        {
+          "episodes": "S01E07-S01E09",
+          "audience_belief": "What the audience believes in the crisis phase (assumption cracking)",
+          "guidance": "The misdirection is half-broken — some viewers see the truth, others cling to the assumption"
+        },
+        {
+          "episodes": "S01E10",
+          "audience_belief": "What the audience believes after the finale (truth or productive ambiguity)",
+          "guidance": "Reveal or refuse to reveal — both are valid if the emotional arc is complete"
+        }
+      ]
+    }
+  ],
+  "per_episode_notes": {}
+}

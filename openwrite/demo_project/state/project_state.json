@@ -1,0 +1,51 @@
+{
+  "project": "The Red Beret",
+  "current_chapter": 9,
+  "chapters_completed": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+  "characters": {
+    "martin": {
+      "active_registers": ["The Soldier", "The Fracture (emerging)"],
+      "location": "Asturian village — northern campaign complete",
+      "knowledge": ["Carlist faith (cracking)", "fueros", "red beret tradition", "grandfather's crucifix", "seminary training", "hardware store work", "Mola has risen", "the meseta", "non-Carlist Spain exists", "the fueros are unknown outside Navarre", "professional soldiers exist (Vidal)", "what killing feels like", "Madrid's soundscape", "Army of Africa exists", "the unification decree", "the yoke-and-arrows", "Salazar's Falangist vision", "Don Eusebio's bitterness", "the Basque Country is Catholic", "the same crucifix in Basque churches", "Euskara is the language his grandmother spoke", "Amaia Etxeberria", "the closed school", "the dying Basque soldier", "the oak tree cut down", "the fueros will be abolished"]
+    },
+    "don_eusebio": {
+      "active_registers": ["The Patriarch (cracking)", "The Father"],
+      "location": "Pamplona",
+      "knowledge": ["Carlist politics", "three Carlist wars", "wife's death", "elder son's death", "mobilization order", "unification decree", "king was not consulted", "junta is divided", "fueros being abolished"]
+    },
+    "tomas": {
+      "active_registers": ["The Companion"],
+      "location": "Asturian village beside Martín",
+      "knowledge": ["practical soldiering", "family tradition", "the meseta", "first kill", "Madrid soundscape", "unification decree", "yoke-and-arrows", "the Basque Country", "Amaia's truth", "the oak tree"]
+    },
+    "padre_joaquin": {
+      "active_registers": ["The Pastor", "The Doubt (visible)"],
+      "location": "Asturian village",
+      "knowledge": ["Carlist theology", "parish ministry", "mobilization", "blessing the dead", "blessing both sides", "the same sacrament for enemy and friend", "the oak tree stump"]
+    },
+    "vidal": {
+      "active_registers": ["The Officer", "The Realist"],
+      "location": "with the battalion",
+      "knowledge": ["professional soldiering", "Rif War", "the requeté's courage", "unification decree"]
+    },
+    "salazar": {
+      "active_registers": ["The Falangist", "The Pragmatist"],
+      "location": "unknown — departed after Ch5",
+      "knowledge": ["Falangist vision", "José Antonio's radicalism", "unification plan", "the requeté's resistance"]
+    },
+    "amaia": {
+      "active_registers": ["The Teacher", "The Basque", "The Private Woman"],
+      "location": "departed — walking through streets of occupied town (Ch8)",
+      "knowledge": ["closed school", "banned language", "the requeté's occupation", "Martín cannot answer"]
+    }
+  },
+  "props_motifs": {
+    "wooden_crucifix": "in Martín's pocket — held at night",
+    "red_beret": "on Martín's head — bears yoke-and-arrows pin",
+    "scapular": "on Tomás's chest",
+    "yoke_and_arrows_pin": "on berets",
+    "alphabet_chart": "folded in Martín's jacket from Ch8",
+    "oak_tree_stump": "in Asturian village — Padre Joaquín's palm on the cut wood"
+  },
+  "timeline_position": "October 1937 — northern campaign complete, Asturian village"
+}

@@ -1,0 +1,47 @@
+{
+  "description": "Tracks the progress of the season arc — which storylines are active, which are resolved, and where each subplot stands. Updated after each episode is locked.",
+  "season": 1,
+  "total_episodes": 10,
+  "current_episode": null,
+  "arc_progress": {
+    "act_one": {
+      "episodes": "S01E01-S01E03",
+      "status": "not_started",
+      "description": "Setup — introduce world, characters, engine. Establish status quo, then disrupt it."
+    },
+    "act_two": {
+      "episodes": "S01E04-S01E06",
+      "status": "not_started",
+      "description": "Complication — stakes escalate. Personal life collides with the case. Mid-season twist."
+    },
+    "act_three": {
+      "episodes": "S01E07-S01E09",
+      "status": "not_started",
+      "description": "Crisis — everything the protagonist thought they knew is challenged. Cost becomes personal."
+    },
+    "act_four": {
+      "episodes": "S01E10",
+      "status": "not_started",
+      "description": "Resolution or refusal to resolve. Season question answered or refused."
+    }
+  },
+  "subplots": [
+    {
+      "name": "example_subplot",
+      "description": "Brief description of the subplot",
+      "episodes_active": [],
+      "status": "active|resolved|dangling",
+      "resolution_episode": null,
+      "resolution_description": null
+    }
+  ],
+  "character_arcs": {
+    "description": "Track where each character is in their arc at the end of each locked episode",
+    "characters": {}
+  },
+  "mythology_progress": {
+    "description": "What the audience knows about the season's central mystery at each point",
+    "reveals": []
+  },
+  "episode_completion": {}
+}

@@ -1,0 +1,30 @@
+{
+  "description": "Writing convention tracking across all episodes. Prevents overuse of permitted constructions — the subtle repetition that makes scripts feel manufactured even when no individual sentence violates any rule.",
+  "required_conventions": {
+    "body_anchors": "Physical grounding in every scene (hands, eyes, breath, spine, jaw, feet)",
+    "sensory_details": "At least 2 senses per scene (touch, sound, smell, taste, sight)",
+    "subtext": "Characters never name their emotional states directly",
+    "silence": "What characters DON'T say is as important as what they do"
+  },
+  "prohibited_patterns": {
+    "camera_directions": "No 'we see,' 'the camera,' 'close on,' CUT TO, ANGLE ON, etc.",
+    "emotional_parentheticals": "No (angrily), (sadly), (quietly), (nervously)",
+    "interiority_in_action": "No 'Character remembers,' 'Character thinks'",
+    "adverbs_in_tags": "No 'she says quietly'",
+    "invisible_information": "No durations, off-screen knowledge, historical interiority",
+    "ifs_part_names": "No 'The Analyst takes over' in action lines"
+  },
+  "tracked_patterns": {
+    "body_anchor_distribution": {},
+    "sensory_detail_distribution": {},
+    "sentence_rhythm_patterns": {},
+    "dialogue_attribution": {},
+    "scene_opening_patterns": {},
+    "scene_closing_patterns": {},
+    "episode_opening_patterns": {},
+    "episode_closing_patterns": {},
+    "act_break_patterns": {}
+  },
+  "per_episode_stats": {},
+  "flags": []
+}

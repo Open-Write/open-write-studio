@@ -1,0 +1,40 @@
+{
+  "chapter": 3,
+  "status": "complete",
+  "timestamp": "2026-06-06T21:45:00-04:00",
+  "word_count": 4257,
+  "next_chapter": 4,
+  "next_chapter_title": "The Siege",
+  "prior_chapter_tail": "The tremor had receded in the night. His hands were steady. The shaking had stopped. The narrator closes: He did not know the steady was the wound.",
+  "callback_state": {
+    "crucifix_01": "seeded — held in hands during night prayer",
+    "red_beret_01": "seeded — on Martín's head through combat",
+    "scapular_01": "seeded — Tomás pulls it from under collar before battle",
+    "don_eusebio_silence_01": "seeded",
+    "padre_joaquin_blessings_01": "seeded — Mass before battle, pastoral certainty",
+    "tell_my_mother_01": "seeded — Tomás dictates letter to mother",
+    "meseta_motif": "seeded — the advance through olive groves",
+    "vidal_competence": "seeded — tactical orders, pointing south",
+    "don_eusebio_letters": "seeded — second letter referenced",
+    "tomas_pragmatism": "seeded — 'We fight. We win. We go home.'",
+    "first_kill": "seeded — the man in the blue shirt, the body changing direction",
+    "body_prayer": "seeded — hands, breath, dark, the crucifix",
+    "shaking_stopping": "seeded — the numbness beginning"
+  },
+  "convention_state": {
+    "body_anchors_used": ["hands (PRIMARY — trigger, shaking, crucifix, cigarette)", "eyes", "breath"],
+    "sentence_rhythm": ["polysyndeton (reduced)", "anaphoric triplets (controlled)"],
+    "voice_techniques_used": ["immediacy collapse (minimal — staying in boy's body)", "grounding location (brief)", "writing-as-reckoning frame"]
+  },
+  "reader_state": {
+    "phase": "misdirection_active",
+    "belief": "Reader believes this is a war story. The first kill is a war-story beat — expected, dramatic, earned."
+  },
+  "timeline_position": "September–October 1936 — first engagement, feast of Virgen del Pilar (Oct 12)",
+  "character_states": {
+    "martin": "has killed a man, hands have shaken and stopped, crucifix in hand at night, moving to Madrid front",
+    "tomas": "beside Martín, gave water and cigarette, scapular touched before battle",
+    "padre_joaquin": "said Mass before battle, blessed the rifles",
+    "vidal": "tactical command, pointing south toward Madrid"
+  }
+}

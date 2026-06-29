@@ -1,0 +1,160 @@
+﻿{
+  "project": "The Red Beret",
+  "callbacks": [
+    {
+      "id": "crucifix_01",
+      "seed_chapter": 1,
+      "description": "Don Eusebio gives Martín the wooden crucifix",
+      "payoff_chapters": [6, 9, 13, 15],
+      "status": "seeded",
+      "current_location": "in Martín's pocket — held at night, contrast with pin"
+    },
+    {
+      "id": "red_beret_01",
+      "seed_chapter": 1,
+      "description": "The red beret — adjusted by Don Eusebio, worn by Martín",
+      "payoff_chapters": [5, 9, 14, 15],
+      "status": "seeded",
+      "current_location": "on Martín's head — now bears yoke-and-arrows pin"
+    },
+    {
+      "id": "scapular_01",
+      "seed_chapter": 1,
+      "description": "Tomás's mother's scapular — worn cord visible",
+      "payoff_chapters": [4, 12, 15],
+      "status": "seeded",
+      "current_location": "on Tomás's chest"
+    },
+    {
+      "id": "don_eusebio_silence_01",
+      "seed_chapter": 1,
+      "description": "Don Eusebio's non-embrace — the step back",
+      "payoff_chapters": [11, 15],
+      "status": "seeded",
+      "current_location": "Pamplona — letter bitterness emerging"
+    },
+    {
+      "id": "padre_joaquin_blessings_01",
+      "seed_chapter": 1,
+      "description": "Padre Joaquín's pastoral certainty",
+      "payoff_chapters": [6, 9, 13],
+      "status": "seeded",
+      "current_location": "with the battalion — blessed the dead at Madrid"
+    },
+    {
+      "id": "tell_my_mother_01",
+      "seed_chapter": 1,
+      "description": "Tomás's connection to his mother",
+      "payoff_chapters": [12, 15],
+      "status": "seeded",
+      "current_location": "implicit — Tomás reading mother's letter"
+    },
+    {
+      "id": "meseta_motif",
+      "seed_chapter": 2,
+      "description": "The meseta as moral mirror",
+      "payoff_chapters": [4, 6],
+      "status": "seeded"
+    },
+    {
+      "id": "vidal_competence",
+      "seed_chapter": 2,
+      "description": "Vidal's professional competence",
+      "payoff_chapters": [6, 10, 12],
+      "status": "seeded"
+    },
+    {
+      "id": "don_eusebio_letters",
+      "seed_chapter": 2,
+      "description": "Don Eusebio's letters — growing bitter",
+      "payoff_chapters": [5, 9, 11],
+      "status": "payoff_ch5",
+      "note": "Bitter letter in Ch5 — 'The king was not consulted.'"
+    },
+    {
+      "id": "tomas_pragmatism",
+      "seed_chapter": 2,
+      "description": "Tomás's pragmatism",
+      "payoff_chapters": [12],
+      "status": "seeded",
+      "text_ref": "It's a pin. It doesn't change anything."
+    },
+    {
+      "id": "first_kill",
+      "seed_chapter": 3,
+      "description": "Martín's first kill — the man in the blue shirt",
+      "payoff_chapters": [9, 15],
+      "status": "seeded"
+    },
+    {
+      "id": "body_prayer",
+      "seed_chapter": 3,
+      "description": "The body's prayer — hands, breath, dark",
+      "payoff_chapters": [9, 13, 15],
+      "status": "seeded"
+    },
+    {
+      "id": "shaking_stopping",
+      "seed_chapter": 3,
+      "description": "The numbness seed — the shaking has stopped",
+      "payoff_chapters": [9, 15],
+      "status": "seeded"
+    },
+    {
+      "id": "army_of_africa",
+      "seed_chapter": 4,
+      "description": "Regulares, Legionnaires — professional brutality",
+      "payoff_chapters": [6, 10, 12],
+      "status": "seeded"
+    },
+    {
+      "id": "failed_assault",
+      "seed_chapter": 4,
+      "description": "The dream of quick victory dies",
+      "payoff_chapters": [6, 10],
+      "status": "seeded"
+    },
+    {
+      "id": "sounds_of_madrid",
+      "seed_chapter": 4,
+      "description": "Artillery heartbeat, machine-gun breath",
+      "payoff_chapters": [6, 10, 12],
+      "status": "seeded"
+    },
+    {
+      "id": "yoke_and_arrows",
+      "seed_chapter": 5,
+      "description": "The Falangist pin on the red beret",
+      "payoff_chapters": [9, 14, 15],
+      "status": "seeded"
+    },
+    {
+      "id": "salazar_speech",
+      "seed_chapter": 5,
+      "description": "Salazar's Falangist argument",
+      "payoff_chapters": [9, 15],
+      "status": "seeded"
+    },
+    {
+      "id": "don_eusebio_bitter_letter",
+      "seed_chapter": 5,
+      "description": "Don Eusebio's bitterness — 'The king was not consulted'",
+      "payoff_chapters": [9, 11, 15],
+      "status": "seeded"
+    },
+    {
+      "id": "oak_tree_01",
+      "seed_chapter": 9,
+      "description": "Cut stump in a Basque village",
+      "payoff_chapters": [15],
+      "status": "not_yet_seeded"
+    },
+    {
+      "id": "amaia_school_01",
+      "seed_chapter": 8,
+      "description": "The closed school in the occupied town",
+      "payoff_chapters": [15],
+      "status": "not_yet_seeded"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "chapter": 6,
+  "status": "complete",
+  "timestamp": "2026-06-07T16:25:00-04:00",
+  "word_count": 3844,
+  "next_chapter": 7,
+  "next_chapter_title": "The Basque Country",
+  "prior_chapter_tail": "The field was quiet. Seventeen graves. The sticks marking them. The flies.",
+  "timeline_position": "February 1937 — Jarama front, south of Madrid",
+  "character_states": {
+    "martin": "in the trench at Jarama, wears pin on beret, holds crucifix at night, hears foreign voices",
+    "tomas": "beside Martín in the trench, pragmatic, scapular on chest",
+    "padre_joaquin": "hearing longer confessions, hands shaking during blessings",
+    "vidal": "officer, clipped and factual, 'A field does not care which side you are on.'"
+  }
+}

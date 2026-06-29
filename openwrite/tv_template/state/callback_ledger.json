@@ -1,0 +1,23 @@
+{
+  "description": "Cross-episode callback and setup tracking. Every seed must have a payoff. Every payoff must have a seed. Seeds can span episodes within a season, or across seasons.",
+  "seeds": [
+    {
+      "id": "example_seed",
+      "seeded_in_episode": "S01E01",
+      "seeded_in_scene": 3,
+      "must_pay_off_by_episode": "S01E06",
+      "must_pay_off_by_scene": null,
+      "paid_off": false,
+      "paid_off_in_episode": null,
+      "paid_off_in_scene": null,
+      "payoff_description": "Description of what the payoff looks like when it occurs",
+      "seed_type": "dialogue|visual|prop|character_detail|background",
+      "visibility": "foreground|background|subliminal",
+      "notes": "Additional context for the writer"
+    }
+  ],
+  "season_cross_references": {
+    "description": "Seeds that span multiple seasons. Use this section for seeds planted in Season 1 that pay off in Season 2+.",
+    "entries": []
+  }
+}

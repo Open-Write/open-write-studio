@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "qg-state": {
+      "command": "node",
+      "args": ["tools/state_server/index.js"],
+      "cwd": "${workspaceFolder}",
+      "env": {}
+    }
+  }
+}

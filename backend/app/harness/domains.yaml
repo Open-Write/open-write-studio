@@ -1,0 +1,72 @@
+# Open-Write-Studio harness — Domain & Role Registry
+#
+# Config-driven routing for the orchestration layer. The planner reads this to
+# decide, for any task, which domain and agent ROLE to use. The router maps a
+# role to a default model (qualified "<provider>/<model>", resolved via the
+# multi-provider system) and the skills the executor must read first.
+#
+# Adapted from C:\The_Architect\core\domains.yaml for a writing-focused app.
+# Add domains/roles here without touching planner code.
+
+version: "1.0"
+updated: "2026-06-26"
+
+domains:
+  writing:
+    description: "Creative writing — the Open-Write novel pipeline."
+    default_role: architect
+    default_mode: architect
+    proprietary: false
+    # The verifier that certifies writing work: the deterministic completion gate.
+    verifier:
+      kind: manifest
+      tool: "tools/verify_completion.py"
+    skills:
+      - "openwrite/novel_template/skills/definition_of_done.md"
+      - "openwrite/novel_template/skills/critic_architecture.md"
+  core:
+    description: "The app itself — backend, frontend, the harness."
+    default_role: coder
+    default_mode: code
+    proprietary: false
+    verifier:
+      kind: tests
+    skills:
+      - "AGENTS.md"
+
+# Agent roles. `model` is a qualified provider/model id (resolved via the
+# multi-provider system). Roles are NOT models — one role may run on several
+# models; the ≥2-model rule applies to critic/adversarial/editorial passes.
+roles:
+  planner:
+    job: "Decompose a goal into a dependency-ordered TaskPlan; route by domain."
+  systems-architect:
+    job: "Architecture, design, cross-module integration, spec writing."
+    model: ""
+  coder:
+    job: "Module implementation, bug fixes, tests, refactoring, scripting."
+    model: ""
+  architect:                       # writing-domain unit planner (strictest gate)
+    job: "Plan a single writing unit; plan must exist on disk before the writer runs."
+    model: ""
+  writer:
+    job: "Execute a writing plan in the output format (Markdown)."
+    model: ""
+  critic:
+    job: "Review a unit for one failure class (show/voice/palette/continuity/naturalism)."
+    model: ""
+    rule: ">=2 distinct models per pass; union of flagged issues"
+  cutter:
+    job: "Remove only material flagged by critics/editorial."
+    model: ""
+  editorial:
+    job: "Structural assessment + prose review."
+    model: ""
+  adversarial-reader:
+    job: "Cold coverage of the FULL work (never a sample)."
+    model: ""
+    rule: ">=2 distinct models"
+  verifier:
+    job: "On-disk + tool + manifest check; emit PASS/FAIL. Never self-grades."
+  reporter:
+    job: "Human-facing progress + blockers."

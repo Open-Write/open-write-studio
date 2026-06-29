@@ -1,0 +1,33 @@
+{
+  "chapter": 1,
+  "status": "complete",
+  "timestamp": "2026-06-06T17:45:00-04:00",
+  "word_count": 4210,
+  "next_chapter": 2,
+  "next_chapter_title": "The March South",
+  "prior_chapter_tail": "I am looking. I am calling it. The king did not come.",
+  "callback_state": {
+    "crucifix_01": "seeded — in Martín's pocket",
+    "red_beret_01": "seeded — on Martín's head",
+    "scapular_01": "seeded — worn cord visible on Tomás",
+    "don_eusebio_silence_01": "seeded — step back at fountain",
+    "padre_joaquin_blessings_01": "seeded — pastoral certainty at plaza",
+    "tell_my_mother_01": "seeded — Tomás's mother referenced"
+  },
+  "convention_state": {
+    "body_anchors_used": ["hands (primary)", "smell", "wool", "wood", "bread"],
+    "sentence_rhythm": ["polysyndeton chains (monitor)", "anaphoric triplets (reduced)"],
+    "voice_techniques_used": ["immediacy collapse", "grounding location", "writing-as-reckoning frame"]
+  },
+  "reader_state": {
+    "phase": "misdirection_active",
+    "belief": "Reader believes this is a war story about a young Carlist's crusade. Conviction is primary."
+  },
+  "timeline_position": "July 18, 1936 — evening (departing Pamplona)",
+  "character_states": {
+    "martin": "marching south, crucifix in pocket, beret on head, conviction intact",
+    "don_eusebio": "in Pamplona, watching from the fountain, step back completed",
+    "tomas": "beside Martín, bread shared, three brothers in the column",
+    "padre_joaquin": "with the battalion, military blanket over cassock"
+  }
+}

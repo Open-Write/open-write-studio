@@ -1,0 +1,30 @@
+{
+  "chapter": 5,
+  "status": "complete",
+  "timestamp": "2026-06-07T07:15:00-04:00",
+  "word_count": 4637,
+  "next_chapter": 6,
+  "next_chapter_title": "The Field of Jarama",
+  "prior_chapter_tail": "I did not know.",
+  "callback_state": {
+    "crucifix_01": "seeded — in pocket, held at night, contrast with pin",
+    "red_beret_01": "seeded — now bears yoke-and-arrows pin",
+    "scapular_01": "seeded — on Tomás's chest while sleeping",
+    "don_eusebio_silence_01": "seeded — letter bitterness, word crossed out twice",
+    "padre_joaquin_blessings_01": "seeded",
+    "tell_my_mother_01": "seeded",
+    "tomas_pragmatism": "seeded — 'It's a pin. It doesn't change anything.'",
+    "yoke_and_arrows": "seeded — pin on beret, two symbols one head",
+    "salazar_speech": "seeded — 'The unification is not the death of your tradition.'",
+    "don_eusebio_bitter_letter": "seeded — 'The king was not consulted. I do not know what we are fighting for now.'"
+  },
+  "timeline_position": "February 17, 1937 — Madrid reserve line",
+  "character_states": {
+    "martin": "wears yoke-and-arrows on beret, holds crucifix at night, uncertain",
+    "tomas": "wears pin with indifference, 'It's a pin'",
+    "salazar": "departed — integration overseer, persuasive",
+    "don_eusebio": "in Pamplona — bitter letter, word crossed out twice",
+    "vidal": "read the decree without decoration",
+    "padre_joaquin": "background"
+  }
+}
