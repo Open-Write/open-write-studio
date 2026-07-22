@@ -241,6 +241,109 @@ CATALOG: list[dict] = [
         "tier": "standard",
         "strengths": ["long-context", "bilingual", "prose"],
     },
+    # ── LM Studio (local — free, runs on your hardware) ──────────────────
+    # Models below are popular GGUF quantizations people run in LM Studio.
+    # The exact model name depends on which file you downloaded; these are
+    # suggested starting points. LM Studio auto-detects loaded models.
+    {
+        "id": "lmstudio/llama-3.3-70b-instruct",
+        "name": "Llama 3.3 70B (local)",
+        "provider": "lmstudio",
+        "note": "Strong open-source model, runs locally on 24+ GB VRAM",
+        "tier": "free",
+        "strengths": ["prose", "reasoning", "open-source"],
+    },
+    {
+        "id": "lmstudio/qwen2.5-72b-instruct",
+        "name": "Qwen 2.5 72B (local)",
+        "provider": "lmstudio",
+        "note": "Excellent bilingual model, large context, 48+ GB VRAM",
+        "tier": "free",
+        "strengths": ["prose", "bilingual", "long-context"],
+    },
+    {
+        "id": "lmstudio/mistral-nemo-12b-instruct",
+        "name": "Mistral Nemo 12B (local)",
+        "provider": "lmstudio",
+        "note": "Compact, fast, good prose quality for its size",
+        "tier": "free",
+        "strengths": ["fast", "prose", "open-source"],
+    },
+    {
+        "id": "lmstudio/phi-4-14b",
+        "name": "Phi-4 14B (local)",
+        "provider": "lmstudio",
+        "note": "Microsoft's small-but-strong model, runs on 8+ GB VRAM",
+        "tier": "free",
+        "strengths": ["fast", "reasoning", "open-source"],
+    },
+    {
+        "id": "lmstudio/deepseek-r1-distill-llama-70b",
+        "name": "DeepSeek R1 Distill 70B (local)",
+        "provider": "lmstudio",
+        "note": "Reasoning-focused distilled model, good for plot planning",
+        "tier": "free",
+        "strengths": ["reasoning", "open-source", "prose"],
+    },
+    {
+        "id": "lmstudio/gemma-2-9b-instruct",
+        "name": "Gemma 2 9B (local)",
+        "provider": "lmstudio",
+        "note": "Google's compact model, fast on modest hardware",
+        "tier": "free",
+        "strengths": ["fast", "affordable", "open-source"],
+    },
+    # ── Ollama (local — free, runs on your hardware) ─────────────────────
+    # Ollama model names use the format "model:tag". Run `ollama pull <name>`
+    # to download. Ollama auto-detects installed models.
+    {
+        "id": "ollama/llama3.3:70b",
+        "name": "Llama 3.3 70B (Ollama)",
+        "provider": "ollama",
+        "note": "Strong open-source model, 24+ GB VRAM",
+        "tier": "free",
+        "strengths": ["prose", "reasoning", "open-source"],
+    },
+    {
+        "id": "ollama/qwen2.5:72b",
+        "name": "Qwen 2.5 72B (Ollama)",
+        "provider": "ollama",
+        "note": "Excellent bilingual model, 48+ GB VRAM",
+        "tier": "free",
+        "strengths": ["prose", "bilingual", "long-context"],
+    },
+    {
+        "id": "ollama/mistral-nemo:12b",
+        "name": "Mistral Nemo 12B (Ollama)",
+        "provider": "ollama",
+        "note": "Compact, fast, good prose for its size",
+        "tier": "free",
+        "strengths": ["fast", "prose", "open-source"],
+    },
+    {
+        "id": "ollama/phi4:14b",
+        "name": "Phi-4 14B (Ollama)",
+        "provider": "ollama",
+        "note": "Microsoft's small-but-strong, 8+ GB VRAM",
+        "tier": "free",
+        "strengths": ["fast", "reasoning", "open-source"],
+    },
+    {
+        "id": "ollama/deepseek-r1:70b",
+        "name": "DeepSeek R1 70B (Ollama)",
+        "provider": "ollama",
+        "note": "Reasoning-focused, good for plot planning",
+        "tier": "free",
+        "strengths": ["reasoning", "open-source", "prose"],
+    },
+    {
+        "id": "ollama/gemma2:9b",
+        "name": "Gemma 2 9B (Ollama)",
+        "provider": "ollama",
+        "note": "Google's compact model, fast on modest hardware",
+        "tier": "free",
+        "strengths": ["fast", "affordable", "open-source"],
+    },
 ]
 
 

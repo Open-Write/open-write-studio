@@ -403,6 +403,21 @@ PROVIDER_SEEDS = [
         "api_key": "",
         "models": [],
     },
+    # ── Local Providers (run on your machine, no API key) ────────────────
+    {
+        "id": "lmstudio",
+        "label": "LM Studio",
+        "base_url": "http://localhost:1234/v1",
+        "api_key": "",
+        "models": [],
+    },
+    {
+        "id": "ollama",
+        "label": "Ollama",
+        "base_url": "http://localhost:11434/v1",
+        "api_key": "",
+        "models": [],
+    },
 ]
 
 

@@ -572,7 +572,18 @@ export function Settings({ onClose }: SettingsProps) {
                     >
                       Chinese Providers
                     </button>
-                    {["openrouter", "openai", "anthropic", "deepseek", "google", "glm", "qwen"].map(pid => (
+                    <button
+                      onClick={() => setCatalogFilter("local")}
+                      type="button"
+                      className={`rounded px-2 py-1 text-[11px] transition-colors ${
+                        catalogFilter === "local"
+                          ? "bg-indigo-600 text-white"
+                          : "border border-border bg-bg-surface text-text-muted hover:border-indigo-500"
+                      }`}
+                    >
+                      Local
+                    </button>
+                    {["openrouter", "openai", "anthropic", "deepseek", "google", "glm", "qwen", "lmstudio", "ollama"].map(pid => (
                       <button
                         key={pid}
                         onClick={() => setCatalogFilter(pid)}
@@ -603,6 +614,7 @@ export function Settings({ onClose }: SettingsProps) {
                             if (catalogFilter === "all") return true;
                             if (catalogFilter === "us") return ["openrouter", "openai", "anthropic", "google", "mistral", "groq", "xai", "together", "fireworks", "deepinfra", "perplexity"].includes(m.provider);
                             if (catalogFilter === "cn") return ["deepseek", "glm", "qwen", "moonshot", "minimax", "baichuan", "stepfun", "siliconflow", "mimo"].includes(m.provider);
+                            if (catalogFilter === "local") return ["lmstudio", "ollama"].includes(m.provider);
                             return m.provider === catalogFilter;
                           })
                           .map(m => {
@@ -662,6 +674,7 @@ export function Settings({ onClose }: SettingsProps) {
                         if (catalogFilter === "all") return true;
                         if (catalogFilter === "us") return ["openrouter", "openai", "anthropic", "google", "mistral", "groq", "xai", "together", "fireworks", "deepinfra", "perplexity"].includes(p.id);
                         if (catalogFilter === "cn") return ["deepseek", "glm", "qwen", "moonshot", "minimax", "baichuan", "stepfun", "siliconflow", "mimo"].includes(p.id);
+                        if (catalogFilter === "local") return ["lmstudio", "ollama"].includes(p.id);
                         return p.id === catalogFilter;
                       })
                       .map(p => (

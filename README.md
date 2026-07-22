@@ -2,7 +2,7 @@
 
 A local-first Markdown writing app for fiction and worldbuilding with an autonomous AI production pipeline. Open-Write combines a distraction-free editor with a deterministic completion gate, multi-critic review system, and resumable phase-by-phase pipeline.
 
-> Your manuscript, profiles, and notes are plain Markdown files in a folder you control. Nothing leaves your machine except the AI requests you explicitly trigger, which go directly to your chosen provider. Open-Write supports 20 LLM providers out of the box — OpenRouter, OpenAI, Anthropic, Google AI, Mistral, Groq, xAI, DeepSeek, GLM/Zhipu, Qwen, and more — plus any OpenAI-compatible custom endpoint.
+> Your manuscript, profiles, and notes are plain Markdown files in a folder you control. Nothing leaves your machine except the AI requests you explicitly trigger, which go directly to your chosen provider. Open-Write supports 22 LLM providers out of the box — OpenRouter, OpenAI, Anthropic, Google AI, Mistral, Groq, xAI, DeepSeek, GLM/Zhipu, Qwen, and more — plus local inference via **LM Studio** and **Ollama** (no API key needed, models run on your hardware) and any OpenAI-compatible custom endpoint.
 
 ## Install (end users)
 
@@ -95,7 +95,7 @@ Flags: `-SkipBackend` (reuse existing sidecar), `-Debug` (debug build).
 ```
 
 - **Frontend:** React 19 + TypeScript + Vite, CodeMirror 6 editor, Zustand state, shadcn/ui + Tailwind CSS v4
-- **Backend:** FastAPI + uvicorn, managed by `uv`. 20-provider LLM routing with curated model catalog
+- **Backend:** FastAPI + uvicorn, managed by `uv`. 22-provider LLM routing with curated model catalog (including local inference via LM Studio and Ollama)
 - **Shell:** Tauri v2 (Rust) — native window, OS integration, sidecar packaging
 - **Storage:** Markdown files (source of truth) + SQLite cache (rebuildable from Markdown)
 
@@ -143,7 +143,7 @@ npx tsc --noEmit
 - **Writing Companion** — chat panel for brainstorming, voice work, ad-hoc questions
 - **Open-Write Pipeline** — autonomous, resumable phase-by-phase production: bible → voice → editorial lock → (per-unit: architect → writer → critics ×5 → editorial → verify) → assemble → adversarial read → finalize
 - **Deterministic completion gate** — word counting, manifest building, verification, linting, SHA-256-bound completion certificate
-- **Multi-provider LLM routing** — 20 providers (OpenRouter, OpenAI, Anthropic, Google AI, Mistral, Groq, xAI, DeepSeek, GLM, Qwen, and more) with a curated 26-model "Recommended Models" catalog organized by tier and strength
+- **Multi-provider LLM routing** — 22 providers (OpenRouter, OpenAI, Anthropic, Google AI, Mistral, Groq, xAI, DeepSeek, GLM, Qwen, LM Studio, Ollama, and more) with a curated model catalog organized by tier and strength. Local providers run models on your hardware with no API key.
 - **Harness layer** — goal → planner → router → runner → verifier → reporter orchestration above the pipeline
 - **Export** — full manuscript, dated snapshots, TXT/DOCX/EPUB/Markdown
 
