@@ -1,64 +1,165 @@
-# Open-Write
+# Open-Write Studio
 
-A local-first Markdown writing app for fiction and worldbuilding, with structured, context-aware AI review tools. Open-Write combines a distraction-free editor with an AI that reviews, critiques, and brainstorms on demand.
+A local-first Markdown writing app for fiction and worldbuilding with an autonomous AI production pipeline. Open-Write combines a distraction-free editor with a deterministic completion gate, multi-critic review system, and resumable phase-by-phase pipeline.
 
-> Open-Write runs entirely on your machine. Your manuscript, profiles, and notes are plain Markdown files in a folder you control. Nothing is uploaded anywhere except the AI requests you explicitly trigger, and those go directly from your computer to your chosen AI provider.
+> Your manuscript, profiles, and notes are plain Markdown files in a folder you control. Nothing leaves your machine except the AI requests you explicitly trigger, which go directly to your chosen provider (OpenRouter, GLM/Zhipu, MiMo, or a custom endpoint).
 
-## What it does
+## Quick start
 
-- **Markdown editor** with focused, distraction-free writing in a serif typeface (Tauri + CodeMirror 6)
-- **Profile system** for characters, relationships, locations, and lore, with structured trait blocks and importance levels
-- **Smart Advisor** runs Readability, Structure, and Context passes directly over your chapter; findings appear as colored inline highlights anchored to the exact passages, with accept / ignore / re-cast controls
-- **Writing Companion** chat panel for conversational help (brainstorming, voice work, ad-hoc questions)
-- **Series support** for multi-book projects with shared canonical profiles and per-book character arcs
-- **Export** to a full manuscript, dated snapshots, and optional inclusion of summaries, notes, and profiles
-- **Light + dark themes**
+### Prerequisites
 
-## Requirements
+- **Windows 10 or 11**
+- **Python 3.11+** — `python` must be on PATH
+- **Node.js 18+** — `npm` must be on PATH
+- **Rust toolchain** — needed for Tauri (install via [rustup](https://rustup.rs/))
+- **uv** (Python package manager) — install with `pip install uv` or the [standalone installer](https://docs.astral.sh/uv/getting-started/installation/)
+- **An AI provider API key** — OpenRouter, GLM/Zhipu, MiMo, or a custom endpoint
 
-- Windows 10 or 11
-- An OpenRouter API key for AI features
-- ~60 MB free disk space for the installer
+### Clone and install
 
-## Install
+```powershell
+git clone https://github.com/fredbrown1856/open-write-studio.git
+cd open-write-studio
+```
 
-Download the latest installer from the Releases page and run the `.msi` file.
+**Backend (Python):**
 
-> Open-Write is not yet code-signed. When you run the installer, Windows SmartScreen may show a "Windows protected your PC" warning. Click **More info**, then **Run anyway** to proceed.
+```powershell
+cd backend
+uv sync
+```
 
-## First run
+**Frontend (Node):**
 
-1. Launch Open-Write
-2. Open Settings (gear icon) and paste your OpenRouter API key
-3. Pick a default model (start with something inexpensive and upgrade if you want richer prose)
-4. Click **New Project** on the home screen and choose a folder
+```powershell
+cd app
+npm install
+```
 
-Your project is just a folder. You can back it up, sync it to a private cloud drive, or commit it to a personal git repo. Open-Write won't touch any of that.
+### Run in development
 
-## Updates
+Open **two terminals** from the repo root:
 
-Automatic updates are not configured for this build. Check for new versions manually from the Releases page.
+```powershell
+# Terminal 1 — Backend
+cd backend
+uv run uvicorn app.main:app --reload --port 8000
+
+# Terminal 2 — Frontend + Tauri shell
+cd app
+npm run tauri dev
+```
+
+The Tauri window opens at `http://localhost:1420` (Vite dev server) with hot reload. The backend runs at `http://127.0.0.1:8000`.
+
+> **Note:** Dev mode does **not** use the sidecar. The backend must be running manually. The bundled Python `.exe` is only built for release via `scripts/build-backend.ps1`.
+
+### First run
+
+1. Open Settings (gear icon) and configure an AI provider — paste your API key and set a model
+2. Click **New Project** on the home screen and choose a folder
+3. Your project is just a folder of Markdown files. Back it up, sync it, or version-control it as you like.
+
+## Architecture
+
+```
+[ Tauri window ]
+       |
+[ React + TypeScript UI ]      panels, editor, chat, overlays (port 1420 dev)
+       |  HTTP on 127.0.0.1:8000
+[ FastAPI backend (Python) ]   file I/O, parsing, AI routing, pipeline, gate
+       |
+[ Markdown files + SQLite ]    dual storage (Markdown = truth, SQLite = cache)
+```
+
+- **Frontend:** React 19 + TypeScript + Vite, CodeMirror 6 editor, Zustand state, shadcn/ui + Tailwind CSS v4
+- **Backend:** FastAPI + uvicorn, managed by `uv`. Multi-provider LLM routing (OpenRouter, GLM, MiMo, custom)
+- **Shell:** Tauri v2 (Rust) — native window, OS integration, sidecar packaging
+- **Storage:** Markdown files (source of truth) + SQLite cache (rebuildable from Markdown)
+
+## Running tests
+
+**Backend (54 tests):**
+
+```powershell
+cd backend
+uv run pytest
+```
+
+Pipeline logic tests are stdlib-only and can run without the full backend env:
+
+```powershell
+$env:PYTHONIOENCODING="utf-8"
+python tests/test_pipeline.py          # 5 logic tests
+python tests/test_critics.py           # 3 critic composition tests
+python tests/test_orchestrator.py      # 7 pipeline orchestrator tests
+python tests/test_profile_context.py   # 7 profile context tests
+python tests/test_providers.py         # multi-provider routing tests
+python tests/test_pipeline_routes.py   # 12 HTTP end-to-end tests (needs fastapi + httpx)
+python tests/test_harness.py           # harness layer tests
+```
+
+**Frontend:**
+
+```powershell
+cd app
+npm run test -- --run
+```
+
+**Typecheck:**
+
+```powershell
+cd app
+npx tsc --noEmit
+```
+
+## Key features
+
+- **Markdown editor** — distraction-free writing with CodeMirror 6, serif typeface, light + dark themes
+- **Profile system** — characters, relationships, locations, lore with structured trait blocks and importance levels (core/present/background/contextual/hidden)
+- **Smart Advisor** — Readability, Structure, and Context passes with inline highlights and accept/ignore/re-cast controls
+- **Writing Companion** — chat panel for brainstorming, voice work, ad-hoc questions
+- **Open-Write Pipeline** — autonomous, resumable phase-by-phase production: bible → voice → editorial lock → (per-unit: architect → writer → critics ×5 → editorial → verify) → assemble → adversarial read → finalize
+- **Deterministic completion gate** — word counting, manifest building, verification, linting, SHA-256-bound completion certificate
+- **Multi-provider LLM routing** — OpenRouter, GLM/Zhipu, MiMo, or any OpenAI-compatible endpoint
+- **Harness layer** — goal → planner → router → runner → verifier → reporter orchestration above the pipeline
+- **Export** — full manuscript, dated snapshots, TXT/DOCX/EPUB/Markdown
+
+## Project structure
+
+```
+app/                     Tauri v2 + React 19 + TypeScript (Vite) frontend
+  src/                   React source (screens/, components/, hooks/, types/, utils/)
+  src-tauri/             Rust shell + tauri.conf.json + sidecar binaries
+backend/                 Python FastAPI backend (managed by uv)
+  app/
+    main.py              FastAPI entry + CORS + router registration
+    routers/             API routes (projects, documents, profiles, ai, pipeline, ...)
+    ai/                  LLM routing, prompts, sanitizer
+    pipeline/            Open-Write gate toolchain (word_count, manifest, verify, lints, finalize, critics, orchestrator)
+    harness/             Architect protocols (planner, router, runner, verifier, reporter)
+  tests/                 pytest test suite
+openwrite/               READ-ONLY reference of the Open-Write methodology
+docs/                    Product scope, architecture, features, roadmap, releasing
+scripts/                 Build and release scripts
+```
+
+## Documentation
+
+| Doc | Description |
+|---|---|
+| [`AGENTS.md`](AGENTS.md) | Project memory — what's done, what remains, architecture decisions, canonical-vs-reference rules |
+| [`docs/product-scope.md`](docs/product-scope.md) | Core goals, writing philosophy, locked product rules |
+| [`docs/architecture.md`](docs/architecture.md) | Three-layer architecture, dual storage, folder layout, API surface |
+| [`docs/features.md`](docs/features.md) | Detailed feature inventory |
+| [`docs/roadmap.md`](docs/roadmap.md) | Scheduled, proposed, and nice-to-have features |
+| [`CHANGELOG.md`](CHANGELOG.md) | Shipped changes per version |
+| [`LICENSE`](LICENSE) | Apache License 2.0 |
 
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE) for the full text.
 
-## Project documentation
-
-- [`docs/product-scope.md`](docs/product-scope.md) -- core goals, writing philosophy, locked product rules
-- [`docs/architecture.md`](docs/architecture.md) -- three-layer architecture, dual storage model, folder layout, API surface
-- [`docs/features.md`](docs/features.md) -- what the product does today, in detail
-- [`docs/roadmap.md`](docs/roadmap.md) -- Scheduled, Proposed, and Nice-to-Have features
-- [`CHANGELOG.md`](CHANGELOG.md) -- shipped changes per version
-
-## Contributing
-
-Issues and pull requests are welcome. The codebase is heavily commented and written for a learning audience. For larger changes, please open an issue first to discuss direction.
-
 ## Acknowledgements
 
-Built with [Tauri](https://tauri.app/), [React](https://react.dev/), [CodeMirror](https://codemirror.net/), [FastAPI](https://fastapi.tiangolo.com/), and [OpenRouter](https://openrouter.ai/).
-
-## About
-
-Open-Write is a local-first Markdown writing application for fiction and worldbuilding with context- and content-aware AI review tools.
+Derived from [Storythread Studio](https://github.com/StoryThread-Dean/StorythreadStudio) by Dean Peterson (Apache-2.0). Built with [Tauri](https://tauri.app/), [React](https://react.dev/), [CodeMirror](https://codemirror.net/), [FastAPI](https://fastapi.tiangolo.com/), and [OpenRouter](https://openrouter.ai/).
