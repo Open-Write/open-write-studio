@@ -5,12 +5,25 @@
 // ── Settings ─────────────────────────────────────────────────────────────────
 
 export interface ProviderConfig {
-  id: string;            // "openrouter" | "glm" | "mimo" | custom
+  id: string;            // "openrouter" | "openai" | "anthropic" | "deepseek" | "glm" | etc.
   label: string;
   base_url: string;
   api_key: string;       // Masked in GET responses ("sk-or-...xyz" or "")
   api_key_set?: boolean; // True if a key is saved (GET only)
   models: string[];      // Curated/known model names for this provider
+}
+
+// ── Model Catalog (curated recommendations) ─────────────────────────────────
+
+export type ModelTier = "free" | "budget" | "standard" | "premium";
+
+export interface CatalogModel {
+  id: string;           // qualified "<provider>/<model>"
+  name: string;         // human-readable display name
+  provider: string;     // provider id
+  note: string;         // short description
+  tier: ModelTier;      // cost tier
+  strengths: string[];  // tags like ["prose", "fast", "reasoning"]
 }
 
 export interface AppSettings {
@@ -29,6 +42,7 @@ export interface AppSettings {
   // Per-role pipeline models (qualified "<provider>/<model>"). Empty = default.
   writer_model:           string;
   critic_model:           string;
+  planner_model:          string;
   // Parent folder where new projects and series are auto-placed. The backend
   // resolves blanks to ~/Documents/Open-Write and always returns a real path
   // here -- the UI can treat it as non-null for display purposes.

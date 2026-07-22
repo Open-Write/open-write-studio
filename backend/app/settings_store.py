@@ -253,9 +253,14 @@ def get_default_model() -> str:
 
 # ── Multi-provider config ────────────────────────────────────────────────────
 # Seed provider definitions. base_url is the OpenAI-compatible root (so the
-# client appends /chat/completions). MiMo ships blank -- the writer enters the
-# endpoint they have a subscription for.
+# client appends /chat/completions). All providers listed here use the
+# OpenAI chat-completions API format. Providers are grouped: US services first,
+# then Chinese services, then aggregators.
+#
+# The curated model lists include the models most commonly used for creative
+# writing. The writer can always add more model names manually.
 PROVIDER_SEEDS = [
+    # ── Aggregator (many models, one key) ─────────────────────────────────
     {
         "id": "openrouter",
         "label": "OpenRouter",
@@ -263,12 +268,133 @@ PROVIDER_SEEDS = [
         "api_key": "",
         "models": [],
     },
+    # ── US Providers ──────────────────────────────────────────────────────
+    {
+        "id": "openai",
+        "label": "OpenAI",
+        "base_url": "https://api.openai.com/v1",
+        "api_key": "",
+        "models": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano", "o3-mini", "o4-mini"],
+    },
+    {
+        "id": "anthropic",
+        "label": "Anthropic",
+        "base_url": "https://api.anthropic.com/v1",
+        "api_key": "",
+        "models": ["claude-sonnet-4-20250514", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"],
+    },
+    {
+        "id": "google",
+        "label": "Google AI",
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+        "api_key": "",
+        "models": ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemma-3-27b-it"],
+    },
+    {
+        "id": "mistral",
+        "label": "Mistral",
+        "base_url": "https://api.mistral.ai/v1",
+        "api_key": "",
+        "models": ["mistral-large-latest", "mistral-small-latest", "pixtral-large-latest", "codestral-latest"],
+    },
+    {
+        "id": "groq",
+        "label": "Groq",
+        "base_url": "https://api.groq.com/openai/v1",
+        "api_key": "",
+        "models": ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "gemma2-9b-it"],
+    },
+    {
+        "id": "xai",
+        "label": "xAI",
+        "base_url": "https://api.x.ai/v1",
+        "api_key": "",
+        "models": ["grok-3", "grok-3-mini", "grok-2"],
+    },
+    {
+        "id": "together",
+        "label": "Together AI",
+        "base_url": "https://api.together.xyz/v1",
+        "api_key": "",
+        "models": ["meta-llama/Llama-3.3-70B-Instruct-Turbo", "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo", "deepseek-ai/DeepSeek-V3", "Qwen/Qwen2.5-72B-Instruct-Turbo"],
+    },
+    {
+        "id": "fireworks",
+        "label": "Fireworks AI",
+        "base_url": "https://api.fireworks.ai/inference/v1",
+        "api_key": "",
+        "models": ["accounts/fireworks/models/llama-v3p3-70b-instruct", "accounts/fireworks/models/deepseek-v3", "accounts/fireworks/models/qwen2p5-72b-instruct"],
+    },
+    {
+        "id": "deepinfra",
+        "label": "DeepInfra",
+        "base_url": "https://api.deepinfra.com/v1/openai",
+        "api_key": "",
+        "models": ["meta-llama/Meta-Llama-3.1-70B-Instruct", "deepseek-ai/DeepSeek-V3", "Qwen/Qwen2.5-72B-Instruct"],
+    },
+    {
+        "id": "perplexity",
+        "label": "Perplexity",
+        "base_url": "https://api.perplexity.ai",
+        "api_key": "",
+        "models": ["sonar-pro", "sonar", "sonar-reasoning-pro"],
+    },
+    # ── Chinese Providers ─────────────────────────────────────────────────
+    {
+        "id": "deepseek",
+        "label": "DeepSeek",
+        "base_url": "https://api.deepseek.com/v1",
+        "api_key": "",
+        "models": ["deepseek-chat", "deepseek-reasoner"],
+    },
     {
         "id": "glm",
         "label": "GLM (Zhipu)",
         "base_url": "https://open.bigmodel.cn/api/paas/v4",
         "api_key": "",
-        "models": ["glm-4.6", "glm-4.5", "glm-4-plus", "glm-4"],
+        "models": ["glm-4-plus", "glm-4", "glm-4-flash", "glm-4-long"],
+    },
+    {
+        "id": "qwen",
+        "label": "Qwen (Alibaba)",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key": "",
+        "models": ["qwen-max", "qwen-plus", "qwen-turbo", "qwen-long"],
+    },
+    {
+        "id": "moonshot",
+        "label": "Moonshot (Kimi)",
+        "base_url": "https://api.moonshot.cn/v1",
+        "api_key": "",
+        "models": ["moonshot-v1-128k", "moonshot-v1-32k", "moonshot-v1-8k"],
+    },
+    {
+        "id": "minimax",
+        "label": "MiniMax",
+        "base_url": "https://api.minimax.chat/v1",
+        "api_key": "",
+        "models": ["abab6.5s-chat", "abab6.5-chat", "abab5.5-chat"],
+    },
+    {
+        "id": "baichuan",
+        "label": "Baichuan",
+        "base_url": "https://api.baichuan-ai.com/v1",
+        "api_key": "",
+        "models": ["Baichuan4", "Baichuan3-Turbo", "Baichuan2-Turbo"],
+    },
+    {
+        "id": "stepfun",
+        "label": "StepFun",
+        "base_url": "https://api.stepfun.com/v1",
+        "api_key": "",
+        "models": ["step-2-16k", "step-1-128k", "step-1-32k"],
+    },
+    {
+        "id": "siliconflow",
+        "label": "SiliconFlow",
+        "base_url": "https://api.siliconflow.cn/v1",
+        "api_key": "",
+        "models": ["deepseek-ai/DeepSeek-V3", "Qwen/Qwen2.5-72B-Instruct", "meta-llama/Meta-Llama-3.1-70B-Instruct"],
     },
     {
         "id": "mimo",

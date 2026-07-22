@@ -17,6 +17,7 @@ from app.settings_store import (
     load_settings, save_settings, get_vault_root, get_providers, _normalize_providers,
 )
 from app.ai.openrouter import test_connection
+from app.ai.model_catalog import get_catalog, get_catalog_by_provider
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
@@ -267,6 +268,27 @@ async def test_provider_connection(req: TestProviderRequest):
     if not provider.get("base_url"):
         return {"ok": False, "error": "No base URL set for this provider."}
     return await test_connection(provider["api_key"], base_url=provider["base_url"])
+
+
+@router.get("/providers/catalog")
+async def model_catalog():
+    """Return the curated model catalog for the quick-pick UI.
+
+    Each entry includes the qualified model id, display name, provider id,
+    a short note, cost tier, and strength tags. The frontend uses this to
+    populate the "Recommended Models" section that works even before the
+    writer has configured any provider keys.
+    """
+    return get_catalog()
+
+
+@router.get("/providers/catalog/{provider_id}")
+async def provider_catalog(provider_id: str):
+    """Return catalog entries for a specific provider."""
+    entries = get_catalog_by_provider(provider_id)
+    if not entries:
+        raise HTTPException(status_code=404, detail=f"No catalog entries for provider: {provider_id}")
+    return entries
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

@@ -15,7 +15,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { X, Eye, EyeOff, CheckCircle, XCircle, Loader, Star, Folder, Sun, Moon } from "lucide-react";
-import type { AppSettings, ModelInfo, ProviderConfig } from "../types/ai";
+import type { AppSettings, ModelInfo, ProviderConfig, CatalogModel } from "../types/ai";
 import { useTheme } from "../hooks/useTheme";
 import { useUiScale, UI_SCALE_PX, type UiScale } from "../hooks/useUiScale";
 
@@ -130,6 +130,10 @@ export function Settings({ onClose }: SettingsProps) {
   const [providerKeyDrafts, setProviderKeyDrafts] = useState<Record<string, string>>({});
   const [providerTestStatus, setProviderTestStatus] = useState<Record<string, { ok: boolean; message: string } | null>>({});
 
+  // Curated model catalog -- loaded from backend, works even without provider keys.
+  const [catalog, setCatalog] = useState<CatalogModel[]>([]);
+  const [catalogFilter, setCatalogFilter] = useState<string>("all"); // "all" | provider id | tier
+
   // Theme: lives in the global theme store (useTheme), not in local state.
   // The setter applies the change immediately to the DOM and persists to the
   // backend, so there's no separate "save" step for theme like other fields.
@@ -221,6 +225,8 @@ export function Settings({ onClose }: SettingsProps) {
         if (data.openrouter_api_key_set) {
           fetchModels();
         }
+        // Fetch curated catalog -- works without any provider keys
+        fetchCatalog();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Could not load settings.");
       } finally {
@@ -240,6 +246,19 @@ export function Settings({ onClose }: SettingsProps) {
       setModels(data);
     } catch {
       // Not critical -- user can still manually type a model ID
+    }
+  }, []);
+
+
+  // --- Fetch curated model catalog ---
+  const fetchCatalog = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/settings/providers/catalog`);
+      if (!res.ok) return;
+      const data: CatalogModel[] = await res.json();
+      setCatalog(data);
+    } catch {
+      // Not critical -- the catalog is a convenience, not required
     }
   }, []);
 
@@ -456,7 +475,7 @@ export function Settings({ onClose }: SettingsProps) {
                   API & Model Selection
                 </h3>
 
-                {/* OpenRouter API Key */}
+                {/* OpenRouter API Key (legacy -- still functional) */}
                 <div className="mb-5">
                   <label className="mb-1 block text-xs font-medium text-text-primary">
                     OpenRouter API Key
@@ -464,7 +483,7 @@ export function Settings({ onClose }: SettingsProps) {
                   <p className="mb-2 text-xs text-faint">
                     {settings?.openrouter_api_key_set
                       ? `Current key: ${settings.openrouter_api_key} -- enter a new key to replace it`
-                      : "No key saved. Get one free at openrouter.ai"
+                      : "Quick start: get a key at openrouter.ai for access to 200+ models with one key."
                     }
                   </p>
                   <div className="flex items-center gap-2">
@@ -503,7 +522,7 @@ export function Settings({ onClose }: SettingsProps) {
                   )}
                 </div>
 
-                {/* ── Providers (OpenRouter / GLM / MiMo / custom) ─────────── */}
+                {/* ── Providers (OpenRouter / OpenAI / Anthropic / etc.) ──── */}
                 {/* Each provider is an OpenAI-compatible endpoint with its own
                     base_url + key + model list. Models are qualified
                     "<provider>/<model>" everywhere they're selected. */}
@@ -512,20 +531,153 @@ export function Settings({ onClose }: SettingsProps) {
                     LLM Providers
                   </label>
                   <p className="mb-3 text-xs text-faint">
-                    Use your own subscriptions (GLM, MiMo, or any OpenAI-compatible
-                    endpoint) alongside OpenRouter. Enter the base URL + API key for
-                    each provider you have, and list its model names.
+                    Configure your AI provider API keys below. OpenRouter gives access
+                    to many models with one key. Direct providers (OpenAI, Anthropic,
+                    DeepSeek, etc.) use your own subscription. Any OpenAI-compatible
+                    endpoint works.
                   </p>
+
+                  {/* Provider filter tabs */}
+                  <div className="mb-3 flex flex-wrap gap-1">
+                    <button
+                      onClick={() => setCatalogFilter("all")}
+                      type="button"
+                      className={`rounded px-2 py-1 text-[11px] transition-colors ${
+                        catalogFilter === "all"
+                          ? "bg-indigo-600 text-white"
+                          : "border border-border bg-bg-surface text-text-muted hover:border-indigo-500"
+                      }`}
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={() => setCatalogFilter("us")}
+                      type="button"
+                      className={`rounded px-2 py-1 text-[11px] transition-colors ${
+                        catalogFilter === "us"
+                          ? "bg-indigo-600 text-white"
+                          : "border border-border bg-bg-surface text-text-muted hover:border-indigo-500"
+                      }`}
+                    >
+                      US Providers
+                    </button>
+                    <button
+                      onClick={() => setCatalogFilter("cn")}
+                      type="button"
+                      className={`rounded px-2 py-1 text-[11px] transition-colors ${
+                        catalogFilter === "cn"
+                          ? "bg-indigo-600 text-white"
+                          : "border border-border bg-bg-surface text-text-muted hover:border-indigo-500"
+                      }`}
+                    >
+                      Chinese Providers
+                    </button>
+                    {["openrouter", "openai", "anthropic", "deepseek", "google", "glm", "qwen"].map(pid => (
+                      <button
+                        key={pid}
+                        onClick={() => setCatalogFilter(pid)}
+                        type="button"
+                        className={`rounded px-2 py-1 text-[11px] transition-colors ${
+                          catalogFilter === pid
+                            ? "bg-indigo-600 text-white"
+                            : "border border-border bg-bg-surface text-text-muted hover:border-indigo-500"
+                        }`}
+                      >
+                        {providers.find(p => p.id === pid)?.label ?? pid}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Recommended Models from catalog */}
+                  {catalog.length > 0 && (
+                    <div className="mb-4 rounded border border-border bg-bg-surface p-3">
+                      <p className="mb-2 text-xs font-semibold text-indigo-400">
+                        Recommended Models
+                      </p>
+                      <p className="mb-2 text-[11px] text-faint">
+                        Click to set as default model. These are curated for creative writing.
+                      </p>
+                      <div className="max-h-48 space-y-1 overflow-y-auto">
+                        {catalog
+                          .filter(m => {
+                            if (catalogFilter === "all") return true;
+                            if (catalogFilter === "us") return ["openrouter", "openai", "anthropic", "google", "mistral", "groq", "xai", "together", "fireworks", "deepinfra", "perplexity"].includes(m.provider);
+                            if (catalogFilter === "cn") return ["deepseek", "glm", "qwen", "moonshot", "minimax", "baichuan", "stepfun", "siliconflow", "mimo"].includes(m.provider);
+                            return m.provider === catalogFilter;
+                          })
+                          .map(m => {
+                            const isConfigured = providers.some(p => p.id === m.provider && p.api_key_set);
+                            return (
+                              <button
+                                key={m.id}
+                                onClick={() => setSelectedModel(m.id)}
+                                className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left transition-colors ${
+                                  selectedModel === m.id
+                                    ? "bg-indigo-900/30 border border-indigo-500"
+                                    : "hover:bg-bg-panel"
+                                }`}
+                                type="button"
+                              >
+                                <span
+                                  className={`h-2 w-2 shrink-0 rounded-full ${
+                                    selectedModel === m.id ? "bg-indigo-400" : "bg-transparent"
+                                  }`}
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <p className={`truncate text-xs ${selectedModel === m.id ? "text-indigo-300 font-medium" : "text-text-primary"}`}>
+                                    {m.name}
+                                  </p>
+                                  <p className="text-[11px] text-faint">{m.note}</p>
+                                </div>
+                                <div className="flex shrink-0 items-center gap-1.5">
+                                  {m.strengths.slice(0, 2).map(s => (
+                                    <span key={s} className="rounded bg-bg-base px-1.5 py-0.5 text-[10px] text-text-muted">
+                                      {s}
+                                    </span>
+                                  ))}
+                                  <span className={`text-[10px] ${
+                                    m.tier === "free" ? "text-emerald-500" :
+                                    m.tier === "budget" ? "text-teal-400" :
+                                    m.tier === "premium" ? "text-amber-400" :
+                                    "text-faint"
+                                  }`}>
+                                    {m.tier}
+                                  </span>
+                                  {!isConfigured && (
+                                    <span className="text-[10px] text-amber-500" title="Provider not configured">
+                                      no key
+                                    </span>
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-4">
-                    {providers.map(p => (
+                    {providers
+                      .filter(p => {
+                        if (catalogFilter === "all") return true;
+                        if (catalogFilter === "us") return ["openrouter", "openai", "anthropic", "google", "mistral", "groq", "xai", "together", "fireworks", "deepinfra", "perplexity"].includes(p.id);
+                        if (catalogFilter === "cn") return ["deepseek", "glm", "qwen", "moonshot", "minimax", "baichuan", "stepfun", "siliconflow", "mimo"].includes(p.id);
+                        return p.id === catalogFilter;
+                      })
+                      .map(p => (
                       <div key={p.id} className="rounded border border-border bg-bg-surface p-3">
                         <div className="mb-2 flex items-center justify-between">
                           <span className="text-xs font-semibold text-text-primary">
                             {p.label} <span className="font-normal text-faint">({p.id})</span>
                           </span>
-                          <span className={`text-[10px] ${p.api_key_set ? "text-emerald-400" : "text-faint"}`}>
-                            {p.api_key_set ? "key set" : "no key"}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            {catalog.some(m => m.provider === p.id) && (
+                              <span className="text-[10px] text-indigo-400">recommended</span>
+                            )}
+                            <span className={`text-[10px] ${p.api_key_set ? "text-emerald-400" : "text-faint"}`}>
+                              {p.api_key_set ? "key set" : "no key"}
+                            </span>
+                          </div>
                         </div>
                         <div className="grid grid-cols-1 gap-2">
                           <input
@@ -546,7 +698,7 @@ export function Settings({ onClose }: SettingsProps) {
                             type="text"
                             value={(p.models ?? []).join(", ")}
                             onChange={e => updateProvider(p.id, { models: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })}
-                            placeholder="model names, comma-separated (e.g. glm-4.6, glm-4.5)"
+                            placeholder="model names, comma-separated (e.g. gpt-4o, gpt-4o-mini)"
                             className="w-full rounded border border-border bg-bg-base px-2 py-1.5 text-xs text-text-primary placeholder-faint outline-none focus:border-indigo-500"
                           />
                         </div>
