@@ -34,7 +34,7 @@ import type {
 } from "../types/project";
 import { STORY_TYPE_LABELS } from "../types/project";
 import { formatDateTime12h } from "../utils/dateFormat";
-import { Wordmark } from "../components/Wordmark";
+
 
 const API_BASE = "http://localhost:8000";
 
@@ -401,14 +401,12 @@ export function ProjectHome({ onProjectOpen }: ProjectHomeProps) {
   return (
     <div className="flex h-screen flex-col bg-bg-primary text-text-primary">
 
-      {/* Title bar -- a full-width logo banner with the tagline beneath.
-          Wordmark renders the dashed-thin ivory strip carrying the official
-          logo art. The tagline sits below it on the regular bg-bg-panel
-          background so the banner reads as the focal point and the tagline
-          as supporting copy. */}
+      {/* Title bar -- app name + tagline. The window header icon provides brand identity. */}
       <div className="shrink-0 border-b border-border bg-bg-panel">
-        <Wordmark />
-        <p className="py-2 text-center text-xs text-text-muted">
+        <p className="py-3 text-center text-sm font-semibold text-text-primary">
+          Open-Write
+        </p>
+        <p className="-mt-2 pb-2 text-center text-xs text-text-muted">
           Your local writing workspace
         </p>
       </div>
