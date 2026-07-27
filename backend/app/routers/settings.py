@@ -81,6 +81,7 @@ class UpdateSettingsRequest(BaseModel):
     writer_model:       str | None                    = None
     critic_model:       str | None                    = None
     planner_model:      str | None                    = None
+    model_routing:      dict[str, str] | None         = None
     # Empty string resets to the default location (~/Documents/Open-Write).
     # Any non-empty value is taken as-is. The directory is created on next
     # use; we don't validate it exists at save time so writers can set a
@@ -175,6 +176,8 @@ async def update_settings(request: UpdateSettingsRequest):
         settings["critic_model"] = request.critic_model
     if request.planner_model is not None:
         settings["planner_model"] = request.planner_model
+    if request.model_routing is not None:
+        settings["model_routing"] = request.model_routing
     if request.vault_root is not None:
         # Empty string is a sentinel for "reset to default" -- store as ""
         # and let get_vault_root() substitute the default at read time.

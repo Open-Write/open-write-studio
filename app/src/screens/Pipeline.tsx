@@ -18,11 +18,12 @@
 // authority on phase ordering and gate verdicts; this component only displays
 // results and lets the writer choose when to continue.
 
-import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Play, Loader2, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { ArrowLeft, Play, Loader2, CheckCircle2, XCircle, AlertCircle, FolderTree, MessageSquare, Zap, Square } from "lucide-react";
 import type { ProjectInfo } from "../types/project";
-
-const API_BASE = "http://localhost:8000";
+import { PipelineOutputs } from "./PipelineOutputs";
+import { PipelineChat } from "./PipelineChat";
+import { PIPELINE_API_BASE } from "../utils/pipelineApi";
 
 // Mirror of orchestrator.ALL_PHASES, in execution order. Kept here so the UI
 // can render the full roadmap (with done/current/pending states) even before
@@ -81,11 +82,28 @@ export function Pipeline({ project, onBack }: PipelineProps) {
   const [instructions, setInstructions] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  // Hub tabs: Run (drive the pipeline) / Outputs (browse the library) /
+  // Chat (steer the run conversationally). ``viewedArtifact`` is shared between
+  // Outputs and Chat so the companion knows what the writer is reading.
+  const [tab, setTab] = useState<"run" | "outputs" | "chat">("run");
+  const [viewedArtifact, setViewedArtifact] = useState<string | null>(null);
+
+  // Auto-run: loops advance-phase until the run completes, fails, or the user
+  // stops. Uses a ref so the async loop can be cancelled from outside.
+  const [autoRunning, setAutoRunning] = useState(false);
+  const autoRunRef = useRef(false);
+
+  // User override: lets the user provide their own content for the current
+  // phase instead of calling the model.
+  const [overrideOpen, setOverrideOpen] = useState(false);
+  const [overrideContent, setOverrideContent] = useState("");
+  const [overrideBusy, setOverrideBusy] = useState(false);
+
   // Load the current run state on mount and after each phase.
   const refresh = useCallback(async () => {
     try {
       const params = new URLSearchParams({ project_path: project.root_path });
-      const res = await fetch(`${API_BASE}/api/pipeline/run-state?${params}`);
+      const res = await fetch(`${PIPELINE_API_BASE}/api/pipeline/run-state?${params}`);
       if (!res.ok) throw new Error("Could not load pipeline state.");
       const data: RunStateResponse = await res.json();
       setRunState(data);
@@ -98,18 +116,45 @@ export function Pipeline({ project, onBack }: PipelineProps) {
 
   useEffect(() => { void refresh(); }, [refresh]);
 
+  // Rerun dialog state: when the project has existing material, ask the user
+  // whether to start fresh or revise using existing critic feedback.
+  const [rerunDialog, setRerunDialog] = useState(false);
+  const [existingMaterial, setExistingMaterial] = useState<{
+    has_bible: boolean; chapter_count: number; critic_count: number; has_material: boolean;
+  } | null>(null);
+
   async function handleStartRun() {
+    // Check if the project has existing material before starting.
+    try {
+      const checkRes = await fetch(
+        `${PIPELINE_API_BASE}/api/pipeline/check-existing?project_path=${encodeURIComponent(project.root_path)}`
+      );
+      if (checkRes.ok) {
+        const check = await checkRes.json();
+        if (check.has_material) {
+          setExistingMaterial(check);
+          setRerunDialog(true);
+          return; // Show dialog; user will choose fresh/revise.
+        }
+      }
+    } catch { /* best-effort; fall through to fresh start */ }
+    await doStartRun("fresh");
+  }
+
+  async function doStartRun(rerunMode: "fresh" | "revise") {
+    setRerunDialog(false);
     setLoading(true);
     setError(null);
     setLastAdvance(null);
     try {
-      const res = await fetch(`${API_BASE}/api/pipeline/start-run`, {
+      const res = await fetch(`${PIPELINE_API_BASE}/api/pipeline/start-run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           project_path: project.root_path,
           project_name: project.title,
           instructions: instructions,
+          rerun_mode: rerunMode,
         }),
       });
       if (!res.ok) {
@@ -128,7 +173,7 @@ export function Pipeline({ project, onBack }: PipelineProps) {
     setRunning(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/pipeline/advance-phase`, {
+      const res = await fetch(`${PIPELINE_API_BASE}/api/pipeline/advance-phase`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -142,10 +187,77 @@ export function Pipeline({ project, onBack }: PipelineProps) {
       }
       setLastAdvance(data);
       await refresh();
+      return data;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Advance failed.");
+      return null;
     } finally {
       setRunning(false);
+    }
+  }
+
+  async function handleAutoRun() {
+    setAutoRunning(true);
+    autoRunRef.current = true;
+    const DELAY_MS = 2000; // 2s between phases for visibility
+    let phaseCount = 0;
+    const MAX_PHASES = 100; // safety limit
+
+    while (autoRunRef.current && phaseCount < MAX_PHASES) {
+      const data = await handleAdvance();
+      phaseCount++;
+
+      if (!data) {
+        // Error occurred — stop auto-run.
+        break;
+      }
+
+      // Refresh to get the latest state.
+      await refresh();
+
+      // Check if the run is done.
+      const state = data.state as { status?: string } | undefined;
+      const status = state?.status;
+      if (status === "complete" || status === "failed") {
+        break;
+      }
+
+      // Delay between phases.
+      await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+    }
+
+    setAutoRunning(false);
+    autoRunRef.current = false;
+  }
+
+  function stopAutoRun() {
+    autoRunRef.current = false;
+  }
+
+  async function handleSetOverride() {
+    if (!overrideContent.trim() || !currentPhase) return;
+    setOverrideBusy(true);
+    try {
+      const chapter = runState?.units?.[currentUnitIndexClamped(runState)];
+      const isUnit = UNIT_PHASE_KEYS.has(currentPhase);
+      await fetch(`${PIPELINE_API_BASE}/api/pipeline/set-override`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_path: project.root_path,
+          phase: currentPhase,
+          content: overrideContent,
+          chapter: isUnit ? chapter : undefined,
+        }),
+      });
+      setOverrideOpen(false);
+      setOverrideContent("");
+      // Auto-advance so the override is applied immediately.
+      await handleAdvance();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not set override.");
+    } finally {
+      setOverrideBusy(false);
     }
   }
 
@@ -153,6 +265,24 @@ export function Pipeline({ project, onBack }: PipelineProps) {
   const currentPhase = runState?.current_phase;
   const runComplete = runState?.status === "complete";
   const runFailed = runState?.status === "failed";
+
+  async function handleResetRun() {
+    setLoading(true);
+    setError(null);
+    setLastAdvance(null);
+    try {
+      await fetch(`${PIPELINE_API_BASE}/api/pipeline/reset-run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ project_path: project.root_path }),
+      });
+      await refresh();
+    } catch {
+      // Best-effort — refresh will show the clean state regardless.
+    } finally {
+      setLoading(false);
+    }
+  }
   const flatOrder = PHASE_ROADMAP.map(p => p.key);
   const currentIndex = currentPhase ? flatOrder.indexOf(currentPhase) : -1;
 
@@ -200,6 +330,33 @@ export function Pipeline({ project, onBack }: PipelineProps) {
         </div>
       </div>
 
+      {/* ── Hub tabs: Run / Outputs / Chat ─────────────────────────────── */}
+      <div className="flex shrink-0 items-center gap-1 border-b border-border bg-bg-panel px-2 py-1">
+        <TabButton active={tab === "run"} onClick={() => setTab("run")} icon={Play} label="Run" />
+        <TabButton active={tab === "outputs"} onClick={() => setTab("outputs")} icon={FolderTree} label="Outputs" />
+        <TabButton active={tab === "chat"} onClick={() => setTab("chat")} icon={MessageSquare} label="Chat" />
+      </div>
+
+      {tab === "outputs" && (
+        <PipelineOutputs
+          project={project}
+          viewedArtifact={viewedArtifact}
+          onViewedArtifactChange={setViewedArtifact}
+        />
+      )}
+      {tab === "chat" && (
+        <PipelineChat
+          project={project}
+          runState={runState}
+          viewedArtifact={viewedArtifact}
+          onInstructionsChanged={(brief) =>
+            setRunState(prev => (prev ? { ...prev, instructions: brief } : prev))
+          }
+          onRunStateChanged={() => void refresh()}
+        />
+      )}
+
+      {tab === "run" && (
       <div className="flex min-h-0 flex-1 overflow-hidden">
 
         {/* ── Left: phase roadmap ──────────────────────────────────────── */}
@@ -222,6 +379,10 @@ export function Pipeline({ project, onBack }: PipelineProps) {
                   These instructions are appended to every phase's prompt — the LLM will honor them across bible, writer, and critic phases.
                 </p>
               </div>
+
+              {/* Model routing */}
+              <ModelRoutingConfig project={project} />
+
               <button
                 onClick={handleStartRun}
                 disabled={loading}
@@ -275,8 +436,17 @@ export function Pipeline({ project, onBack }: PipelineProps) {
             </div>
           )}
           {runState?.last_error && (
-            <div className="mb-4 rounded border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-400">
-              {runState.last_error}
+            <div className="mb-4 flex items-start justify-between gap-3 rounded border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-400">
+              <span>{runState.last_error}</span>
+              {runFailed && (
+                <button
+                  onClick={handleResetRun}
+                  disabled={loading}
+                  className="shrink-0 rounded bg-red-500/20 px-2 py-1 text-xs font-medium text-red-300 hover:bg-red-500/30 disabled:opacity-50"
+                >
+                  Start Fresh
+                </button>
+              )}
             </div>
           )}
 
@@ -322,7 +492,7 @@ export function Pipeline({ project, onBack }: PipelineProps) {
 
               {/* Controls */}
               <div className="mt-6 flex items-center gap-3">
-                {!runComplete && (
+                {!runComplete && !autoRunning && (
                   <button
                     onClick={handleAdvance}
                     disabled={running}
@@ -331,6 +501,29 @@ export function Pipeline({ project, onBack }: PipelineProps) {
                     {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
                     {running ? "Running..." : "Run Next Phase"}
                   </button>
+                )}
+                {!runComplete && !autoRunning && (
+                  <button
+                    onClick={() => void handleAutoRun()}
+                    disabled={running}
+                    className="inline-flex items-center gap-2 rounded border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-medium text-accent hover:bg-accent/20 disabled:opacity-50"
+                    title="Run all phases automatically until the pipeline completes or fails"
+                  >
+                    <Zap className="h-4 w-4" /> Auto-run
+                  </button>
+                )}
+                {autoRunning && (
+                  <button
+                    onClick={stopAutoRun}
+                    className="inline-flex items-center gap-2 rounded border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/20"
+                  >
+                    <Square className="h-4 w-4" /> Stop Auto-run
+                  </button>
+                )}
+                {autoRunning && (
+                  <span className="inline-flex items-center gap-2 text-xs text-accent">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Running pipeline automatically...
+                  </span>
                 )}
                 {runComplete && (
                   <span className="inline-flex items-center gap-2 text-sm text-green-400">
@@ -341,11 +534,99 @@ export function Pipeline({ project, onBack }: PipelineProps) {
                   <span className="text-xs text-text-muted">model: {lastAdvance.model_used}</span>
                 )}
               </div>
+
+              {/* User override: provide your own content for this phase */}
+              {!runComplete && !autoRunning && (
+                <div className="mt-3">
+                  {!overrideOpen ? (
+                    <button
+                      onClick={() => setOverrideOpen(true)}
+                      className="text-xs text-text-muted underline decoration-dotted underline-offset-2 hover:text-text-primary"
+                    >
+                      Provide your own content for this phase instead of generating
+                    </button>
+                  ) : (
+                    <div className="rounded border border-border bg-bg-surface p-3">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-xs font-medium text-text-primary">
+                          Override: {runState?.current_phase_label ?? currentPhase}
+                          {runState?.units && UNIT_PHASE_KEYS.has(currentPhase ?? "") &&
+                            ` — Chapter ${runState.units[currentUnitIndexClamped(runState)]}`}
+                        </span>
+                        <button onClick={() => setOverrideOpen(false)} className="text-text-muted hover:text-text-primary">
+                          <XCircle className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <textarea
+                        value={overrideContent}
+                        onChange={(e) => setOverrideContent(e.target.value)}
+                        rows={8}
+                        placeholder={`Paste your ${currentPhase} content here. It will be used instead of generating via the model.`}
+                        className="mb-2 w-full rounded border border-border bg-bg-base px-2 py-1.5 font-mono text-xs text-text-base placeholder:text-text-muted focus:border-accent focus:outline-none"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => void handleSetOverride()}
+                          disabled={overrideBusy || !overrideContent.trim()}
+                          className="inline-flex items-center gap-1.5 rounded bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/90 disabled:opacity-50"
+                        >
+                          {overrideBusy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
+                          Apply & Run
+                        </button>
+                        <button
+                          onClick={() => { setOverrideOpen(false); setOverrideContent(""); }}
+                          className="rounded border border-border px-3 py-1.5 text-xs text-text-muted hover:bg-bg-surface"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                      <p className="mt-2 text-[11px] text-text-muted">
+                        Your content replaces what the model would generate. It's processed the same way
+                        (written to disk, split into files for bible/voice, etc.) and then the pipeline
+                        continues normally. This is a one-shot override — the next phase uses the model.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>
       </div>
+      )}
+
+      {/* Rerun dialog overlay */}
+      {rerunDialog && existingMaterial && (
+        <RerunDialog
+          existing={existingMaterial}
+          onFresh={() => void doStartRun("fresh")}
+          onRevise={() => void doStartRun("revise")}
+          onCancel={() => setRerunDialog(false)}
+        />
+      )}
     </div>
+  );
+}
+
+// ── Hub tab button ───────────────────────────────────────────────────────────
+
+function TabButton({
+  active, onClick, icon: Icon, label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: typeof Play;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+        active ? "bg-accent/15 text-accent" : "text-text-muted hover:bg-bg-surface hover:text-text-primary"
+      }`}
+    >
+      <Icon className="h-3.5 w-3.5" /> {label}
+    </button>
   );
 }
 
@@ -437,6 +718,153 @@ function PhaseResult({ result, phase }: { result: Record<string, unknown>; phase
               </li>
             ))}
           </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+// ── Rerun dialog ────────────────────────────────────────────────────────────
+
+function RerunDialog({
+  existing,
+  onFresh,
+  onRevise,
+  onCancel,
+}: {
+  existing: { chapter_count: number; critic_count: number };
+  onFresh: () => void;
+  onRevise: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="w-full max-w-md rounded-lg border border-border bg-bg-panel p-6 shadow-2xl">
+        <h2 className="mb-2 text-lg font-semibold text-text-primary">Existing Material Found</h2>
+        <p className="mb-4 text-sm text-text-muted">
+          This project already has{" "}
+          <span className="font-medium text-text-primary">
+            {existing.chapter_count} chapter{existing.chapter_count !== 1 ? "s" : ""}
+          </span>
+          {existing.critic_count > 0 && (
+            <>
+              {" "}and{" "}
+              <span className="font-medium text-text-primary">
+                {existing.critic_count} critic review{existing.critic_count !== 1 ? "s" : ""}
+              </span>
+            </>
+          )}{" "}
+          from a previous pipeline run.
+        </p>
+
+        <div className="mb-4 space-y-3">
+          <button
+            onClick={onRevise}
+            className="flex w-full flex-col rounded border border-accent/40 bg-accent/10 p-3 text-left transition-colors hover:bg-accent/20"
+          >
+            <span className="text-sm font-medium text-accent">Revise with Existing Feedback</span>
+            <span className="mt-1 text-xs text-text-muted">
+              Keep the bible and voice spec. Re-run the writer for each chapter using existing critic
+              feedback to improve the prose. The critics will re-evaluate each revision.
+            </span>
+          </button>
+
+          <button
+            onClick={onFresh}
+            className="flex w-full flex-col rounded border border-border bg-bg-surface p-3 text-left transition-colors hover:bg-bg-base"
+          >
+            <span className="text-sm font-medium text-text-primary">Start Fresh</span>
+            <span className="mt-1 text-xs text-text-muted">
+              Overwrite everything. Generate a new bible, voice spec, outline, and all chapters from
+              the creative brief.
+            </span>
+          </button>
+        </div>
+
+        <button
+          onClick={onCancel}
+          className="w-full rounded border border-border px-3 py-1.5 text-xs text-text-muted hover:bg-bg-surface"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+// ── Model routing config ────────────────────────────────────────────────────
+// A collapsible section that shows the current per-phase model routing and
+// lets the user toggle phases between "Primary" and "Critic" model.
+
+const MODEL_ROUTABLE_PHASES = [
+  { key: "bible", label: "Bible" },
+  { key: "voice", label: "Voice selection" },
+  { key: "editorial_lock", label: "Editorial lock" },
+  { key: "architect", label: "Architect" },
+  { key: "writer", label: "Writer / prose" },
+  { key: "critics", label: "Critics" },
+  { key: "editorial", label: "Editorial eval" },
+  { key: "adversarial", label: "Adversarial read" },
+];
+
+function ModelRoutingConfig({ }: { project: ProjectInfo }) {
+  const [open, setOpen] = useState(false);
+  const [routing, setRouting] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+
+  // Load current routing on mount.
+  useEffect(() => {
+    fetch(`${PIPELINE_API_BASE}/api/settings`)
+      .then(r => r.json())
+      .then(s => setRouting(s.model_routing ?? {}))
+      .catch(() => {});
+  }, []);
+
+  async function setPhase(phase: string, model: string) {
+    const next = { ...routing, [phase]: model };
+    setRouting(next);
+    setSaving(true);
+    try {
+      await fetch(`${PIPELINE_API_BASE}/api/settings`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model_routing: next }),
+      });
+    } catch { /* best-effort */ }
+    finally { setSaving(false); }
+  }
+
+  return (
+    <div className="mb-3">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between rounded px-2 py-1 text-xs text-text-muted hover:bg-bg-surface"
+      >
+        <span>Model Routing</span>
+        <span className="text-[10px]">{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className="mt-1 space-y-1 rounded border border-border bg-bg-surface p-2">
+          <p className="mb-1 text-[10px] text-text-muted">
+            Assign each phase to the Primary or Critic model. Default: critics/editorial use the Critic model.
+          </p>
+          {MODEL_ROUTABLE_PHASES.map(p => (
+            <div key={p.key} className="flex items-center justify-between gap-2">
+              <span className="text-xs text-text-muted">{p.label}</span>
+              <select
+                value={routing[p.key] ?? ""}
+                onChange={e => void setPhase(p.key, e.target.value)}
+                disabled={saving}
+                className="rounded border border-border bg-bg-base px-1 py-0.5 text-[11px] text-text-base focus:border-accent focus:outline-none"
+              >
+                <option value="">Default</option>
+                <option value="writer">Primary</option>
+                <option value="critic">Critic</option>
+              </select>
+            </div>
+          ))}
         </div>
       )}
     </div>

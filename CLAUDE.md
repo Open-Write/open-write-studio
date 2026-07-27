@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Status
 
-**Current phase: Phase 6 (Export and Polish) -- complete. Post-MVP polish next.**
+**Current phase: Phase I (Pipeline UI Integration) -- complete. Screenplay support next.**
 
-Phases 0-4, 5A-5E, and 6 are complete and merged into `main`. Phase 5 was redesigned into an AI Respec with 5 sub-phases (5A-5E). Phase 6 delivered full-manuscript export (with opt-in chapter summaries / scene summaries / notes / profiles), manual snapshot export, scene summaries (per-scene files with auto-split and selection-based preview), summary quality tuning (cliff-notes reframing + preamble filter), relationship-aware full profile summaries, and a backend-health banner for uniform error handling.
+Phases 0-4, 5A-5E, 6, and I are complete and merged into `main`. Phase 5 was redesigned into an AI Respec with 5 sub-phases (5A-5E). Phase 6 delivered full-manuscript export. Phase I delivered full integration between the Open-Write autonomous pipeline and the Storythread UI: Output Library, Pipeline Companion chat, auto-run, user input overrides, per-stage model routing, post-critics revision loop, rerun dialog, outline unification, skeleton profile generation, scene summary generation, and a CLI debugging tool.
 
 ### Phases 1-3 -- Complete
 Core app: Tauri shell + React scaffold, FastAPI backend, project create/open, CodeMirror Markdown editor, file save, profiles (character/relationship/location/lore/summaries), OpenRouter integration, 9 writing assistants, Settings modal, em dash enforcement.
@@ -69,11 +69,31 @@ Context chips, ai_usage_example generation, section/full summaries, Profile Buil
 - **Relationship-aware full profile summaries**: `generate-full-summary` accepts `project_path`; for character profiles it scans `profiles/relationships/*.md` for the character's name and passes Overview / Current Dynamic snippets as "RELATED RELATIONSHIPS" context so the summary weaves in who the character is to others.
 - **Backend-health banner**: `useBackendHealth` hook polls `/health` every 10s; a single fixed-position banner shows when the backend is unreachable, replacing per-feature cryptic fetch errors. Dismiss-until-state-changes behavior.
 
+### Phase I -- Pipeline UI Integration -- Complete
+- **3-tab Pipeline hub**: Run (existing controls), Outputs (artifact browser), Chat (Pipeline Companion)
+- **Output Library**: `PipelineOutputs.tsx` — collapsible grouped browser (Bible/Voice/Design/Prose/Reviews/Manifest) + markdown/JSON reader pane with word counts
+- **Pipeline Companion**: `PipelineChat.tsx` — multi-turn chat with pipeline context, "Apply to Brief" card (one-click brief update), Re-run Phase dropdown
+- **Auto-run**: ⚡ button loops `advance-phase` with 2s delay, stops on complete/fail, "Stop Auto-run" button
+- **User input overrides**: "Provide your own content" textarea per phase — paste your own bible/voice/chapter/critics, pipeline processes it the same way as model output
+- **Per-stage model routing**: `model_routing` setting maps phases to "writer"/"critic", `get_model_for_phase()` resolver, UI dropdowns in Pipeline start screen
+- **Post-critics revision loop**: REVISE verdict → writer rewrites with all critic findings injected, max 2 retries per chapter
+- **Rerun dialog**: "Revise with Existing Feedback" vs "Start Fresh" when restarting a project with material
+- **Critic model fallback**: if critic provider fails, falls back to primary model automatically
+- **Pipeline → Storythread integration**: outline auto-synced to `notes/outline.md`, skeleton character profiles from concept, scene summaries from architect plans, full profile context (characters + relationships + locations + lore) in prompts
+- **Voice experiment enrichment**: candidates + review + locked spec all produced and browsable
+- **Backend**: `outputs.py` (artifact catalog), 8 new pipeline routes, `set-override`/`clear-override`/`overrides` endpoints, `_apply_user_override()` per-phase handler, `check-existing` endpoint, `reset-run` endpoint
+- **Concurrency**: per-project `asyncio.Lock` on `advance_phase`, atomic `save_run_state` (temp + `os.replace`), `PhaseBusyError` → 409
+- **Security**: `_strip_control_tokens()` neutralizes SUGGESTED_BRIEF blocks from viewed artifacts (CRLF-normalized), last-match extraction, system prompt anti-injection framing
+- **CLI tool**: `backend/tools/ow_cli.py` — `status`/`start`/`advance`/`advance-all`/`reset`/`outputs`/`read`/`critic-test`, `--direct` mode bypasses sidecar
+- **Tests**: `test_pipeline_outputs.py` (27 assertions), all 39 pipeline tests pass, 21 frontend vitest tests pass, tsc clean
+
 ---
 
 ## What Open-Write Is
 
 A **Windows desktop, local-first Markdown writing app** for fiction writers. The writer does all the drafting. AI acts as reviewer, editor, and brainstorming partner -- never a ghostwriter. AI assists on demand; it never auto-applies changes or autonomously updates story content.
+
+**Pipeline mode:** An autonomous, resumable production pipeline that runs the full Open-Write methodology (bible → voice → architect → writer → critics → editorial → verify → assemble → adversarial → finalize). The pipeline is gated by a deterministic completion gate and driven by the orchestrator (`backend/app/pipeline/orchestrator.py`). The user controls the pipeline through the Pipeline screen (Run/Outputs/Chat tabs), with auto-run, user input overrides, and a conversational companion chat.
 
 ---
 
@@ -88,7 +108,7 @@ A **Windows desktop, local-first Markdown writing app** for fiction writers. The
 | Backend | Python + FastAPI | Local service running on `localhost`; handles file I/O, AI routing, and database access |
 | Package manager | uv | Python dependency management (replaces pip/poetry) |
 | Database | SQLite via aiosqlite | Stores metadata, settings, cache -- Markdown files remain source of truth |
-| AI access | OpenRouter | Single API key for multiple models; supports content-mode routing |
+| AI access | Multi-provider (OpenRouter, GLM, MiMo, LM Studio, Ollama, etc.) | 22+ providers with curated model catalog; per-phase model routing; local inference support |
 
 ---
 
@@ -168,6 +188,14 @@ Two automated test suites plus a manual checklist. All three are wired into `/pr
   - `test_outline_frontmatter.py` -- YAML frontmatter parser (11 tests)
   - `test_progress_store.py` -- word counting, night-owl rollover, event recording (14 tests)
   - `test_progress_routes.py` -- `/api/progress/summary` and `/api/progress/daily` HTTP endpoints (11 tests)
+  - `test_pipeline.py` -- word counting, manifest, gate logic (5 tests)
+  - `test_critics.py` -- critic composition, gate validity (3 tests)
+  - `test_pipeline_routes.py` -- HTTP end-to-end pipeline routes (12 tests)
+  - `test_pipeline_outputs.py` -- output catalog, reader, traversal, control, chat-brief (27 assertions)
+  - `test_orchestrator.py` -- pipeline orchestrator (7 tests)
+  - `test_profile_context.py` -- profile loading, importance routing (7 tests)
+  - `test_providers.py` -- multi-provider routing
+  - `test_harness.py` -- harness layer tests
 - `app/src/**/*.test.{ts,tsx}` -- vitest + `@testing-library/react`, runs in jsdom. Current files:
   - `src/components/progress/ProjectCompletionGauge.test.tsx` -- compact bar, slide-over, serial mode, onToggle callback (7 tests)
 - `tests/manual-smoke.md` -- human walks through this before cutting a release. Covers the Tauri-shell flows (file dialogs, the updater, native menus, sidecar lifecycle) that automated tests can't reach today.
@@ -188,6 +216,13 @@ uv run pytest --no-header -q
 
 # Run a single test file
 uv run pytest tests/test_progress_store.py -v
+
+# Run pipeline tests (stdlib-only, no full backend env needed)
+python tests/test_pipeline.py
+python tests/test_critics.py
+python tests/test_pipeline_routes.py
+python tests/test_pipeline_outputs.py
+python tests/test_orchestrator.py
 
 # ── Frontend (run from app/) ──────────────────────────────────────────────────
 cd app

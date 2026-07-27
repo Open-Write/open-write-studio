@@ -36,6 +36,8 @@ def sanitize(text: str) -> str:
     checked by the em_dash lint and the naturalism critic, not stripped here).
     We only collapse accidental repeated whitespace.
     """
+    if not text:
+        return ""
     # Clean up accidental repeated spaces from any upstream substitution.
     text = re.sub(r"  +", " ", text)
     return text

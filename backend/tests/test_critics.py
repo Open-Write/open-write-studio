@@ -36,7 +36,7 @@ VERDICT: PASS
 def test_compose_artifact_is_gate_valid():
     with tempfile.TemporaryDirectory() as root:
         build_project(root)
-        chapter_path = os.path.join(root, "manuscript", "chapters", "001_market.md")
+        chapter_path = os.path.join(root, "manuscript", "001_market.md")
         chash = lint_suite.hash_chapter(chapter_path)
 
         result = critics.compose_artifact("show", 1, _MODEL_REPLY, chash, root)
@@ -62,7 +62,7 @@ def test_compose_artifact_is_gate_valid():
 def test_editorial_writes_to_coverage_reports():
     with tempfile.TemporaryDirectory() as root:
         build_project(root)
-        chapter_path = os.path.join(root, "manuscript", "chapters", "001_market.md")
+        chapter_path = os.path.join(root, "manuscript", "001_market.md")
         chash = lint_suite.hash_chapter(chapter_path)
 
         result = critics.compose_artifact("editorial", 1, _MODEL_REPLY, chash, root)
@@ -75,7 +75,7 @@ def test_composed_artifact_passes_hollow_critics_lint():
     from app.pipeline import lints
     with tempfile.TemporaryDirectory() as root:
         build_project(root)
-        chapter_path = os.path.join(root, "manuscript", "chapters", "001_market.md")
+        chapter_path = os.path.join(root, "manuscript", "001_market.md")
         chash = lint_suite.hash_chapter(chapter_path)
 
         critics.compose_artifact("voice", 1, _MODEL_REPLY, chash, root)

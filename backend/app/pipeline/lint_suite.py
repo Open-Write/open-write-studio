@@ -572,12 +572,13 @@ def hash_chapter(filepath):
 
 def hash_all_chapters(base_dir):
     """Hash all chapter files. Returns dict of {rel_path: hash}."""
-    chapters_dir = os.path.join(base_dir, "manuscript", "chapters")
+    chapters_dir = os.path.join(base_dir, "manuscript")
     if not os.path.isdir(chapters_dir):
         return {}
 
     result = {}
-    files = sorted(globmod.glob(os.path.join(chapters_dir, "*.md")))
+    files = sorted(f for f in globmod.glob(os.path.join(chapters_dir, "*.md"))
+                   if os.path.basename(f) != "novel.md")
     real_base = os.path.realpath(base_dir)
 
     for f in files:

@@ -256,6 +256,7 @@ async def run_chat(
     messages: list[dict],
     temperature: float | None = None,
     base_url: str = OPENROUTER_BASE,
+    timeout: float | None = None,
 ) -> str:
     """
     Send a multi-turn chat completion request to OpenRouter and return
@@ -292,7 +293,7 @@ async def run_chat(
     call_status  = "ok"
 
     try:
-        async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT) as client:
+        async with httpx.AsyncClient(timeout=timeout or REQUEST_TIMEOUT) as client:
             response = await client.post(
                 f"{base_url.rstrip('/')}/chat/completions",
                 headers={
@@ -319,6 +320,13 @@ async def run_chat(
         )
 
     raw_reply = data["choices"][0]["message"]["content"]
+
+    # Guard: some providers return content=null for refusals, empty responses,
+    # or when content filtering strips the entire output. The sanitizer expects
+    # a string — passing None crashes with "expected string or bytes-like
+    # object, got 'NoneType'".
+    if raw_reply is None:
+        raw_reply = ""
 
     # Normalize the reply. Under the Open-Write advisory policy em/en dashes
     # are preserved (density is checked downstream by the lint + critic).

@@ -65,7 +65,7 @@ export function HelpButton() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex h-[500px] w-96 flex-col rounded-lg border border-border bg-bg-base shadow-2xl">
+    <div className="fixed bottom-4 right-4 z-50 flex h-[500px] w-96 flex-col rounded-lg border border-border bg-bg-panel shadow-2xl">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">

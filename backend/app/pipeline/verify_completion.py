@@ -396,6 +396,7 @@ def check_item(base_dir, item, chapter_hashes=None):
             chapter_files = sorted(
                 m for m in globmod.glob(chapter_pattern_full)
                 if os.path.realpath(m).startswith(real_base + os.sep)
+                and os.path.basename(m) != "novel.md"
             )
             sum_wc = 0
             for cf in chapter_files:
@@ -476,9 +477,11 @@ def verify_manifest(base_dir, manifest, expected_chapters=None, skip_lint=False)
 
     # Pre-compute chapter hashes for stale-artifact detection
     chapter_hashes = {}
-    chapters_dir = os.path.join(base_dir, "manuscript", "chapters")
+    chapters_dir = os.path.join(base_dir, "manuscript")
     if os.path.isdir(chapters_dir):
         for f in sorted(globmod.glob(os.path.join(chapters_dir, "*.md"))):
+            if os.path.basename(f) == "novel.md":
+                continue
             h = _compute_chapter_hash(f)
             if h:
                 rel = os.path.relpath(f, base_dir)

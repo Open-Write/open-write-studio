@@ -207,6 +207,50 @@ Updates never download or install automatically.
 
 A first-launch-after-update banner highlights the new version with a changelog link and a donation nudge.
 
+## Open-Write Pipeline
+
+An autonomous, resumable production pipeline that runs the full Open-Write methodology. The pipeline is gated by a deterministic completion gate and driven by the orchestrator (`backend/app/pipeline/orchestrator.py`).
+
+### Pipeline phases
+
+```
+Bible → Voice → Editorial Lock → (per chapter: Architect → Writer → Critics ×5 → Editorial → Verify) → Assemble → Adversarial Read → Finalize
+```
+
+Each phase produces a gate-valid artifact. The pipeline never auto-advances past a FAIL — the writer approves each step.
+
+### Pipeline screen (3 tabs)
+
+- **Run tab** — phase roadmap (done/current/pending), gate verdict banner, phase output panel, Run Next Phase / Auto-run / Stop controls, user input override, model routing config
+- **Outputs tab** — browsable artifact library organized by category (Bible / Voice Experiment / Design Documents / Prose / Reviews / Manifest) with markdown and JSON rendering
+- **Chat tab** — Pipeline Companion: conversational chat with pipeline context, Apply to Brief, Re-run Phase
+
+### Key pipeline features
+
+- **Auto-run** — one-click automatic execution with 2s delay between phases
+- **User input overrides** — provide your own content for any phase instead of generating via the model
+- **Per-stage model routing** — assign Primary or Critic model to each phase
+- **Post-critics revision loop** — REVISE verdict triggers automatic writer rewrite with critic feedback (max 2 retries)
+- **Rerun with feedback** — when restarting a project with existing material, choose "Revise with Existing Feedback"
+- **Critic model fallback** — if critic provider fails, falls back to primary model
+- **Voice experiment** — structured voice selection with multiple candidates, review, and locked spec
+- **Outline unification** — bible outline auto-synced to `notes/outline.md` (OutlinePlanner sees it)
+- **Skeleton profiles** — auto-generated character profiles from the bible concept
+- **Scene summaries** — auto-generated from architect plans
+- **Start Fresh** — clear stale failed run state and start over
+- **CLI tool** — `backend/tools/ow_cli.py` for command-line debugging
+
+### Pipeline outputs
+
+| Category | Contents |
+|----------|----------|
+| Bible | Concept, outline, format rules, locked voice spec |
+| Voice Experiment | Candidate voices with samples, review/selection rationale, locked spec |
+| Design Documents | Outline structure + per-chapter architect plans |
+| Prose | Chapter manuscripts + assembled novel |
+| Reviews | 5 critics per chapter (show/voice/palette/continuity/naturalism) + editorial + adversarial read |
+| Manifest | Completion manifest, pipeline run state, completion certificate |
+
 ## Backend health monitor
 
 A `useBackendHealth` hook polls `/health` every ten seconds. If the backend is unreachable, a single fixed-position banner replaces all the per-feature "Failed to fetch" errors that would otherwise clutter the UI. The banner dismisses itself when the backend returns.

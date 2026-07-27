@@ -93,7 +93,8 @@ def _sentences(text: str) -> list[str]:
 
 def load_chapters(project: str) -> list[tuple[str, str]]:
     """Return [(filename, text), ...] sorted numerically by leading digits."""
-    paths = glob.glob(os.path.join(project, "manuscript", "chapters", "*.md"))
+    paths = [p for p in glob.glob(os.path.join(project, "manuscript", "*.md"))
+             if os.path.basename(p) != "novel.md"]
     def key(p):
         m = re.match(r"(\d+)", os.path.basename(p))
         return int(m.group(1)) if m else 0

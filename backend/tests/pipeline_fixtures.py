@@ -71,11 +71,11 @@ def build_project(root):
     _write(os.path.join(root, "bible", "07_format_rules.md"), "# Format Rules\n\nNo em dashes.")
     _write(os.path.join(root, "bible", "LOCKED_VOICE_SPEC.md"), "# Voice\n\nLived History.")
 
-    _write(os.path.join(root, "manuscript", "chapters", "001_market.md"), CHAPTER_TEXT)
+    _write(os.path.join(root, "manuscript", "001_market.md"), CHAPTER_TEXT)
     _write(os.path.join(root, "manuscript", "novel.md"),
            "# Market Morning\n\n---\n\n" + CHAPTER_TEXT)
 
-    chash = lint_suite.hash_chapter(os.path.join(root, "manuscript", "chapters", "001_market.md"))
+    chash = lint_suite.hash_chapter(os.path.join(root, "manuscript", "001_market.md"))
 
     _write(os.path.join(root, "critic_outputs", "chapter_1_plan.md"), critic_body("plan", chash))
     for label in ("show", "voice", "palette", "continuity", "naturalism"):

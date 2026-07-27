@@ -68,8 +68,8 @@ def build_manifest(chapter_count, project_name="Untitled", project_type="novel",
     for ch in range(1, chapter_count + 1):
         ch_items = [
             {"label": f"Ch{ch} plan", "path": f"critic_outputs/chapter_{ch}_plan.md", "check": "nonempty"},
-            {"label": f"Ch{ch} draft", "check": "word_floor", "path": f"manuscript/chapters/{ch:03d}_*.md", "floor": word_floor},
-            {"label": f"Ch{ch} lint pass", "check": "lint_pass", "path": f"manuscript/chapters/{ch:03d}_*.md"},
+            {"label": f"Ch{ch} draft", "check": "word_floor", "path": f"manuscript/{ch:03d}_*.md", "floor": word_floor},
+            {"label": f"Ch{ch} lint pass", "check": "lint_pass", "path": f"manuscript/{ch:03d}_*.md"},
             {"label": f"Ch{ch} show critic substance", "check": "critic_substance", "pattern": f"critic_outputs/chapter_{ch}_show*"},
             {"label": f"Ch{ch} voice critic substance", "check": "critic_substance", "pattern": f"critic_outputs/chapter_{ch}_voice*"},
             {"label": f"Ch{ch} palette critic substance", "check": "critic_substance", "pattern": f"critic_outputs/chapter_{ch}_palette*"},
@@ -81,7 +81,7 @@ def build_manifest(chapter_count, project_name="Untitled", project_type="novel",
 
     post_items = [
         {"label": "Adversarial read substance", "check": "critic_substance", "pattern": "coverage_reports/*adversarial*"},
-        {"label": "Assembly integrity", "check": "assembly_match", "assembled_path": "manuscript/novel.md", "chapter_pattern": "manuscript/chapters/*.md"},
+        {"label": "Assembly integrity", "check": "assembly_match", "assembled_path": "manuscript/novel.md", "chapter_pattern": "manuscript/*.md"},
         {"label": "Callback ledger", "path": "state/callback_ledger.json", "check": "nonempty"},
         {"label": "Convention ledger", "path": "state/convention_ledger.json", "check": "nonempty"},
     ]

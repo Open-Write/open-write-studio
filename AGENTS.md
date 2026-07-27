@@ -16,10 +16,11 @@ If you are a bot resuming work in this directory, read this section first.
 - **Phase C (critic runner)** — DONE + tested. `backend/app/pipeline/critics.py` runs the 5 critics + editorial, producing gate-valid artifacts.
 - **Phase P (autonomous pipeline)** — DONE + tested. `backend/app/pipeline/orchestrator.py` is the resumable phase state machine; exposed as 4 routes (`start-run`, `run-state`, `advance-phase`, `phase-output`) and a frontend `app/src/screens/Pipeline.tsx` panel.
 - **Phase G (profile-system convergence)** — DONE + tested. `backend/app/pipeline/profile_context.py` loads character profiles and routes trait context by importance level (core/present/background/contextual/hidden) into the architect/writer/voice/continuity phases; voice registers surface into the voice critic prompt.
-- **Multi-provider LLM routing** — DONE + tested. The backend is provider-agnostic: `backend/app/ai/providers.py` resolves a qualified `"<provider>/<model>"` id (e.g. `glm/glm-4.6`, `mimo/mimo-7b`) to a base_url + key + bare model name, with OpenRouter fallback for legacy unqualified ids. `app/ai/openrouter.py`'s `run_completion`/`run_chat`/`list_models`/`test_connection` all take a `base_url`. Providers (OpenRouter + GLM/Zhipu + MiMo + custom) live in `settings.json` under `providers`; the pipeline uses per-role models (`writer_model` for author phases, `critic_model` for critics/editorial — Open-Write A/B). Settings UI configures each provider's base_url/key/models and the two role models. **MiMo ships with a blank base_url + model list — fill it in Settings (we don't ship a guessed endpoint).**
+- **Phase I (Pipeline UI Integration)** — DONE + tested. Full integration between the Open-Write pipeline and the Storythread UI. See "Phase I — Pipeline UI Integration" section below for the complete feature list.
+- **Multi-provider LLM routing** — DONE + tested. The backend is provider-agnostic: `backend/app/ai/providers.py` resolves a qualified `"<provider>/<model>"` id (e.g. `glm/glm-4.6`, `mimo/mimo-v2.5-pro`) to a base_url + key + bare model name, with OpenRouter fallback for legacy unqualified ids. `app/ai/openrouter.py`'s `run_completion`/`run_chat`/`list_models`/`test_connection` all take a `base_url`. Providers (OpenRouter + GLM/Zhipu + MiMo + custom) live in `settings.json` under `providers`; the pipeline uses per-phase models (configurable via `model_routing` setting). Settings UI configures each provider's base_url/key/models.
 - **Harness layer (The Architect protocols)** — DONE + tested. `backend/app/harness/` is the orchestration layer ABOVE the pipeline: goal → Planner (`planner.py`) → Router (`router.py`, config-driven via `domains.yaml`) → Runner (`runner.py`, dependency-ordered, resumable) → Verifier (`verifier.py`, `VerifierSpec` kinds: files/tool/manifest/tests — manifest reuses the Open-Write gate) → Reporter (`reporter.py`). The generalized `Task`/`TaskPlan` schema enforces unique ids + acyclic deps. Exposed as 6 routes under `/api/harness/*` (`registry`, `plan`, `start-run`, `run-state`, `advance-task`, `report`). Planner uses `planner_model` (multi-provider). Run state persists to `<project>/state/harness_run.json`.
 - **Em-dash policy** — RESOLVED to Open-Write's advisory stance (see Open questions 1).
-- **54 backend tests pass** (`test_pipeline.py`, `test_critics.py`, `test_pipeline_routes.py`, `test_orchestrator.py`, `test_profile_context.py`, `test_providers.py`, `test_harness.py`). Re-run anytime (see Build & run).
+- **54 backend tests pass** (`test_pipeline.py`, `test_critics.py`, `test_pipeline_routes.py`, `test_orchestrator.py`, `test_profile_context.py`, `test_providers.py`, `test_harness.py`, `test_pipeline_outputs.py`). Re-run anytime (see Build & run).
 - The full Open-Write methodology is available locally at `openwrite/` (read-only reference).
 
 ### What remains (your job)
@@ -66,13 +67,14 @@ C:\Open-Write-Studio\
 │   │   ├── main.py          # FastAPI entry + CORS + router registration
 │   │   ├── routers/         # projects, documents, profiles, ai, series, export, progress, search, settings, pipeline
 │   │   ├── ai/              # openrouter.py, prompts.py, assistants.py, sanitizer.py
-│   │   ├── pipeline/        # Open-Write completion-gate toolchain (CANONICAL runtime; Phase T/C):
-│   │   │                    #   word_count, build_manifest, verify_completion, lints, lint_suite, finalize, critics
+│   │   ├── pipeline/        # Open-Write completion-gate toolchain (CANONICAL runtime; Phase T/C/P/I):
+│   │   │                    #   word_count, build_manifest, verify_completion, lints, lint_suite, finalize, critics, orchestrator, outputs, profile_context
 │   │   ├── settings_store.py   # ~/.open-write/settings.json
 │   │   ├── recent_projects.py  # ~/.open-write/open-write.json
 │   │   ├── progress_store.py   # <project>/.open-write/app.db (SQLite cache)
 │   │   └── ...
-│   ├── tests/               # test_pipeline.py, test_critics.py, test_pipeline_routes.py, pipeline_fixtures.py (+ upstream tests)
+│   ├── tests/               # test_pipeline.py, test_critics.py, test_pipeline_routes.py, test_pipeline_outputs.py, test_orchestrator.py, pipeline_fixtures.py (+ upstream tests)
+│   ├── tools/               # ow_cli.py (CLI pipeline driver for debugging)
 │   ├── pyproject.toml
 │   └── backend.spec         # PyInstaller spec (sidecar)
 ├── openwrite/               # READ-ONLY reference snapshot of the Open-Write methodology (Phase P reads its prompts/protocols from here)
@@ -128,6 +130,15 @@ python tests/test_pipeline.py        # 5 logic tests (stdlib only)
 python tests/test_critics.py         # 3 critic-composition tests (stdlib only)
 # HTTP routes test needs fastapi + httpx:
 python tests/test_pipeline_routes.py # 12 end-to-end HTTP tests
+python tests/test_pipeline_outputs.py # 27 output catalog + control + chat tests
+python tests/test_orchestrator.py    # 7 orchestrator tests
+```
+
+**CLI tool** (for debugging the pipeline from the command line):
+```powershell
+cd backend
+python tools/ow_cli.py status <project_path>
+python tools/ow_cli.py --direct advance-all <project_path>
 ```
 
 ### Frontend + Tauri (run from `app/`)
@@ -324,6 +335,87 @@ is untouched (step 4).
 **Tests:** `backend/tests/test_profile_context.py` (7 — profile loading, empty-folder
 handling, per-consumer importance routing for architect/writer/voice, voice-registers
 extraction + no-leak-of-non-voice-material). Run with `python tests/test_profile_context.py`.
+
+### Phase I — Pipeline UI Integration — DONE
+
+**Implemented:** Full integration between the Open-Write autonomous pipeline and the
+Storythread Studio UI. The pipeline was previously bolted on with only start/stop
+controls — now it's fully integrated with browsable outputs, conversational steering,
+automatic revision loops, and user input overrides.
+
+**New backend modules:**
+- `backend/app/pipeline/outputs.py` — read-only artifact catalog (6 categories:
+  Bible/Voice/Design/Prose/Reviews/Manifest), path-traversal-safe reader, word-count-free
+  mode for chat context, `max_chars`-capped reads for the chat path.
+- `backend/app/pipeline/orchestrator.py` (extended) — voice experiment enrichment
+  (candidates + review + locked spec via `_split_voice_reply`), control helpers
+  (`update_instructions`/`prepare_rerun`/`set_status`/`chat_context_snapshot`), per-project
+  `asyncio.Lock` with atomic `save_run_state` (temp + `os.replace`), post-critics revision
+  loop (REVISE → re-run writer with feedback, max 2 retries), user input overrides
+  (`_apply_user_override` — user provides content for any phase), outline sync to
+  `notes/outline.md`, skeleton character profile generation from concept, scene summary
+  generation from architect plans.
+- `backend/app/routers/pipeline.py` (extended) — 8 new routes: `GET /outputs`,
+  `GET /output-file`, `POST /update-instructions`, `POST /rerun-phase`, `POST /set-status`,
+  `POST /chat`, `GET /check-existing`, `POST /reset-run`, `POST /set-override`,
+  `POST /clear-override`, `GET /overrides`. Per-phase model routing via
+  `get_model_for_phase()`. Critic model fallback to primary on provider failure.
+  Prompt-injection isolation (`_strip_control_tokens` with CRLF normalization).
+  `PhaseBusyError` → HTTP 409.
+- `backend/app/ai/providers.py` (extended) — defensive `_extract_model_name()` handles
+  dict-repr model names from corrupted settings.
+- `backend/app/ai/sanitizer.py` (extended) — `sanitize(None)` returns "" instead of crashing.
+- `backend/app/ai/openrouter.py` (extended) — `run_chat` guards against `content: null`
+  from providers, accepts `timeout` parameter.
+- `backend/app/settings_store.py` (extended) — `model_routing` setting, `get_model_for_phase()`
+  resolver.
+- `backend/tools/ow_cli.py` (NEW) — CLI tool for driving the pipeline from the command line
+  (status/start/advance/advance-all/reset/outputs/read/critic-test, `--direct` mode bypasses
+  the sidecar and calls the orchestrator directly).
+
+**New frontend components:**
+- `app/src/utils/pipelineApi.ts` (NEW) — typed client for all new pipeline endpoints.
+- `app/src/screens/PipelineOutputs.tsx` (NEW) — Output Library: collapsible grouped browser
+  (Bible/Voice/Design/Prose/Reviews/Manifest) + markdown/JSON reader pane.
+- `app/src/screens/PipelineChat.tsx` (NEW) — Pipeline Companion: multi-turn chat with
+  Apply to Brief + Re-run Phase controls.
+- `app/src/screens/Pipeline.tsx` (extended) — 3-tab hub (Run/Outputs/Chat), auto-run toggle
+  (⚡ button, 2s delay between phases), user input override UI ("Provide your own content"
+  textarea per phase), model routing config dropdowns, rerun dialog with revision mode
+  ("Revise with Existing Feedback" vs "Start Fresh"), "Start Fresh" button on failed runs,
+  stale error clearing on phase advance.
+
+**Pipeline → Storythread UI integration:**
+- Bible outline auto-synced to `notes/outline.md` after bible phase (OutlinePlanner sees it).
+- Skeleton character profiles auto-generated from concept after bible phase (ProfileBuilder).
+- Scene summaries auto-generated from architect plans after architect phase (SceneSummaryView).
+- Full profile context (characters + relationships + locations + lore) injected into bible,
+  architect, and writer prompts.
+
+**Post-critics revision loop:** After critics evaluate a chapter, if any say REVISE, the
+pipeline immediately loops back to the writer with all critic findings injected as feedback.
+The chapter improves through iteration (max 2 retries) before moving to the next chapter.
+Only proceeds when critics are satisfied (PASS/ADVANCE verdicts).
+
+**CLI tool (`backend/tools/ow_cli.py`):**
+```
+python tools/ow_cli.py status <project>
+python tools/ow_cli.py start  <project> -i "creative brief"
+python tools/ow_cli.py advance <project>
+python tools/ow_cli.py advance-all <project>
+python tools/ow_cli.py reset  <project>
+python tools/ow_cli.py outputs <project>
+python tools/ow_cli.py read   <project> <relpath>
+python tools/ow_cli.py critic-test <project> -t show
+python tools/ow_cli.py --direct advance <project>  # bypass sidecar
+```
+
+**Tests:** `backend/tests/test_pipeline_outputs.py` (NEW, 27 assertions — catalog, reader,
+traversal rejection, control functions, chat-brief extraction). All existing tests still pass
+(39 pipeline tests total, 21 frontend vitest tests, tsc clean).
+
+**Build:** `scripts/build.ps1` or manual: `uv run pyinstaller backend.spec` → copy sidecar →
+`npm.cmd run tauri build`. Output: `app/src-tauri/target/release/bundle/msi/Open-Write_1.0.5_x64_en-US.msi`.
 
 ---
 

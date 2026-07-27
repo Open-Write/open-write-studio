@@ -15,9 +15,61 @@ entry while working on a feature, append it under Unreleased.
 
 ### Added
 
+- **Pipeline Output Library.** The Outputs tab in the Pipeline screen shows a browsable artifact catalog organized by category: Bible (concept, outline, format rules), Voice Experiment (candidates, review, locked spec), Design Documents (outline + architect plans per chapter), Prose (chapter manuscripts + assembled novel), Reviews (5 critics per chapter + editorial + adversarial read), and Manifest & State. Each artifact renders as formatted markdown or JSON with word counts. All files are read from disk (path-traversal-safe) — the library is strictly read-only.
+
+- **Pipeline Companion chat.** The Chat tab in the Pipeline screen provides a conversational interface that knows the current run state, phase, and a summary of which artifacts exist. The companion can propose a revised creative brief (surfaced as a one-click "Apply to Brief" card) and trigger phase re-runs. Multi-turn with session history.
+
+- **Auto-run.** An ⚡ Auto-run button next to Run Next Phase runs all pipeline phases automatically with a 2-second delay between each. Stops when the pipeline completes, fails, or the user clicks Stop Auto-run.
+
+- **User input overrides.** A "Provide your own content for this phase" link below the pipeline controls lets the user paste their own content for any phase (bible, voice, architect, writer, critics, editorial, adversarial). The content is processed the same way model output would be (split into files, written to disk) and the pipeline continues normally. One-shot override — the next phase uses the model.
+
+- **Per-stage model routing.** A "Model Routing" section in the Pipeline start screen lets the user assign "Primary" or "Critic" model to each pipeline phase. Configurable via `settings.json → model_routing` or the UI dropdowns. Default: critics/editorial use the critic model, everything else uses primary.
+
+- **Post-critics revision loop.** After critics evaluate a chapter, if any critic says REVISE, the pipeline immediately loops back to the writer with all critic findings injected as feedback. The writer addresses the specific issues in a targeted rewrite. Max 2 retries per chapter before force-advancing with a warning. This is the core quality loop — critics now drive actual revision instead of just generating reports.
+
+- **Rerun dialog with revision mode.** When clicking Start Run on a project that already has material (bible + chapters), a dialog appears: "Revise with Existing Feedback" (keeps bible/voice spec, re-runs writer using existing critic reports) or "Start Fresh" (overwrites everything). The revise mode skips bible/voice/editorial_lock and starts at the writer phase.
+
+- **Critic model fallback.** If the critic model provider (e.g. GLM) is unreachable from the PyInstaller sidecar, the pipeline automatically falls back to the primary model (e.g. MiMo) for critic calls. The pipeline always makes progress instead of timing out.
+
+- **Pipeline → Storythread integration.** After the bible phase, the outline is auto-synced to `notes/outline.md` (the OutlinePlanner reads it immediately). Skeleton character profiles are auto-generated from the concept document. Scene summaries are auto-generated from architect plans. Full profile context (characters + relationships + locations + lore) is injected into bible, architect, and writer prompts.
+
+- **Start Fresh button.** When a pipeline run fails, a "Start Fresh" button appears next to the error message. Clicking it deletes the stale run state (preserving artifacts on disk) so the user gets a clean Start Run form.
+
+- **CLI debugging tool.** `backend/tools/ow_cli.py` drives the pipeline from the command line: `status`, `start`, `advance`, `advance-all`, `reset`, `outputs`, `read`, `critic-test`. A `--direct` flag bypasses the sidecar and calls the orchestrator directly (useful for debugging provider issues).
+
+- **Voice experiment enrichment.** The voice phase now produces a structured voice experiment: multiple candidate voices with samples + a review/selection rationale + the locked spec. All artifacts are browsable in the Output Library under Voice Experiment.
+
 ### Changed
 
+- **Chapter path unification.** Pipeline chapters now write to `manuscript/` (the same directory the Storythread UI reads) instead of `manuscript/chapters/`. Pipeline-produced chapters appear immediately in the left-nav chapter list, the editor, and Reader Mode. The assembled manuscript (`novel.md`) is filtered from chapter listings.
+
+- **Model routing is per-phase.** The pipeline resolver now passes the phase name directly to `resolve_call` instead of a role string. `get_model_for_phase(phase)` checks `settings.json → model_routing`, then falls back to the role-based default. This enables per-phase model assignment (e.g. "use MiMo for bible but GLM for critics").
+
+- **Voice phase timeout increased.** Pipeline model calls now use a 120-second per-attempt timeout (up from 60s) with 5 retries and exponential backoff. Total worst-case wait before failing is ~10 minutes instead of ~5.
+
+- **Gate phase flags.** The writer and critics phases no longer run the full gate check (which produced false "MISSING" errors for files from phases that hadn't run yet). Only `verify_unit` and `finalize` run the full gate.
+
 ### Fixed
+
+- **Critics sent to wrong provider.** The `advance-phase` route had a typo: `critic_call = _make_model_call(c_key, c_model, a_base)` used the writer's base URL (`a_base`) instead of the critic's (`c_base`). Every critic call was sent to MiMo with GLM's API key → 401 Unauthorized.
+
+- **Sanitizer crash on None model output.** `sanitize(None)` crashed with `TypeError: expected string or bytes-like object, got 'NoneType'` when a provider returned `content: null`. Now returns "".
+
+- **Stale error persists on retry.** `last_error` was never cleared when advancing phases, so a previous ReadTimeout showed forever. Now cleared at the start of each phase attempt.
+
+- **Pipeline advances past REVISE.** The pipeline advanced to the next chapter even when critics said REVISE. Now the post-critics revision loop checks verdicts immediately and loops back to the writer with feedback.
+
+- **False MISSING errors at critic phase.** The gate ran after the writer phase and checked for critic files that hadn't been created yet, producing false "MISSING" errors. Writer and critics phases no longer run the full gate.
+
+- **Model name corruption.** Settings sometimes stored model names as Python dict repr strings (`{'name': 'mimo-v2.5-pro', 'label': 'MiMo V2.5 Pro'}`) instead of bare names. Added defensive `_extract_model_name()` in providers.py that detects and extracts the real name.
+
+- **Prompt injection via viewed artifacts.** The `/chat` route injected untrusted artifact content into the model prompt. Added `_strip_control_tokens()` that neutralizes `SUGGESTED_BRIEF`-shaped blocks (with CRLF normalization) so imported prose can't smuggle a brief-overwrite through the model.
+
+- **Lost-update race on pipeline_run.json.** Added per-project `asyncio.Lock` held across `advance_phase`'s whole load→await→save. Control endpoints acquire the lock non-blocking and return 409 if a phase is mid-execution.
+
+- **ReadTimeout showing on page load.** Stale failed run state persisted across app sessions. Added a "Start Fresh" button that deletes the stale state.
+
+- **Help chat window transparent.** Changed background from `bg-bg-base` to `bg-bg-panel` so the help chat has a distinct opaque background.
 
 - **Outline Planner: sections missing or silently deleted after Raw view edits.** A corruption bug caused the YAML frontmatter closing `---` to fuse with the first `## ` section heading onto one line (e.g. `---## Setting in One Paragraph`). This caused three cascading failures: the frontmatter parser mis-fired and absorbed section content into the YAML body (silently losing YAML field values like word targets and expected characters); the section parser never saw the fused heading; and if the user then saved anything from the Planner (even just editing Project Targets), the Planner wrote back its incomplete section list and permanently deleted the un-parsed sections from disk. Fixed at three layers: (1) `GET /api/documents/outline` now heals `---## ` fusions in the raw file *before* any parsing and writes the repaired content back to disk immediately, so YAML values are always read correctly and the file is safe before any subsequent Planner save; (2) `_reconstruct_outline` always inserts a newline between the YAML block and preamble so the fusion cannot be created again; (3) `_parse_outline_sections` normalizes bodies that start with `## ` so sections at position zero are never silently absorbed into the invisible preamble. Eleven regression tests added.
 

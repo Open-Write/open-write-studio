@@ -215,14 +215,34 @@ def load_character_profiles(project: str) -> list[Profile]:
     Returns Profile objects. Missing or empty folders return [] (the pipeline
     must still run without profiles). Malformed profiles are skipped, never fatal.
     """
-    chars_dir = os.path.join(project, "profiles", "characters")
-    if not os.path.isdir(chars_dir):
+    return _load_profiles_from(project, "characters")
+
+
+def load_relationship_profiles(project: str) -> list[Profile]:
+    """Load and parse every relationship profile under <project>/profiles/relationships/."""
+    return _load_profiles_from(project, "relationships")
+
+
+def load_location_profiles(project: str) -> list[Profile]:
+    """Load and parse every location profile under <project>/profiles/locations/."""
+    return _load_profiles_from(project, "locations")
+
+
+def load_lore_profiles(project: str) -> list[Profile]:
+    """Load and parse every lore entry under <project>/profiles/lore/."""
+    return _load_profiles_from(project, "lore")
+
+
+def _load_profiles_from(project: str, subfolder: str) -> list[Profile]:
+    """Generic profile loader for any profiles/<subfolder>/ directory."""
+    prof_dir = os.path.join(project, "profiles", subfolder)
+    if not os.path.isdir(prof_dir):
         return []
     profiles: list[Profile] = []
-    for filename in sorted(os.listdir(chars_dir)):
+    for filename in sorted(os.listdir(prof_dir)):
         if not filename.endswith(".md"):
             continue
-        path = os.path.join(chars_dir, filename)
+        path = os.path.join(prof_dir, filename)
         if not os.path.isfile(path):
             continue
         try:
@@ -322,3 +342,71 @@ def voice_registers_context(project: str) -> str:
     return ("--- DECLARED VOICE REGISTERS (check dialogue against these) ---\n"
             + "\n".join(parts)
             + "\n--- END VOICE REGISTERS ---")
+
+
+# ── World-building context (relationships, locations, lore) ──────────────────
+# These profile types have simpler formats (free-text sections, no trait blocks
+# with importance levels). The formatter dumps all prose sections so the
+# pipeline prompts have full world-building context.
+
+def format_world_profile(profile: Profile) -> str:
+    """Serialize a non-character profile (relationship/location/lore) into
+    AI-readable text. Dumps all sections with prose content."""
+    kind = profile.role or "entry"
+    lines = [f"{kind}: {profile.name}"]
+    for section_key, section in profile.sections.items():
+        heading = _KEY_TO_HEADING.get(section_key, section_key.replace("_", " ").title())
+        has_prose = bool(section.content and section.content.strip())
+        has_blocks = bool(section.trait_blocks)
+        if not has_prose and not has_blocks:
+            continue
+        lines.append(f"\n## {heading}")
+        if has_prose:
+            lines.append(section.content.strip())
+        for block in section.trait_blocks:
+            lines.append(f"- {block.trait}: {block.description}")
+    return "\n".join(lines).strip()
+
+
+def _world_context_block(project: str, label: str, loader, header: str) -> str:
+    """Build a labeled context block for one world-building profile type."""
+    profiles = loader(project)
+    if not profiles:
+        return ""
+    parts = [format_world_profile(p) for p in profiles]
+    parts = [p for p in parts if p]
+    if not parts:
+        return ""
+    return f"{header}\n\n" + "\n\n".join(parts) + f"\n{header.replace('--- ', '--- END ')}"
+
+
+def relationship_context(project: str) -> str:
+    """Build relationship profile context for pipeline prompts."""
+    return _world_context_block(project, "relationships", load_relationship_profiles,
+                                "--- RELATIONSHIP PROFILES ---")
+
+
+def location_context(project: str) -> str:
+    """Build location profile context for pipeline prompts."""
+    return _world_context_block(project, "locations", load_location_profiles,
+                                "--- LOCATION PROFILES ---")
+
+
+def lore_context(project: str) -> str:
+    """Build lore entry context for pipeline prompts."""
+    return _world_context_block(project, "lore", load_lore_profiles,
+                                "--- LORE ENTRIES ---")
+
+
+def world_context(project: str) -> str:
+    """Build the full world-building context block (relationships + locations + lore).
+
+    Returns a single string with all non-character profiles, suitable for
+    injection into architect/writer/critic prompts. Returns "" if none exist.
+    """
+    blocks = []
+    for builder in (relationship_context, location_context, lore_context):
+        block = builder(project)
+        if block:
+            blocks.append(block)
+    return "\n\n".join(blocks) if blocks else ""

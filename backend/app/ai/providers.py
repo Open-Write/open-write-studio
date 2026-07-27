@@ -28,6 +28,8 @@ provider).
 
 from __future__ import annotations
 
+import ast
+import re
 from dataclasses import dataclass
 
 from app.settings_store import get_providers
@@ -45,6 +47,30 @@ class ResolvedProvider:
     def is_configured(self) -> bool:
         """True if this provider has both a base_url and an api_key."""
         return bool(self.base_url) and bool(self.api_key)
+
+
+def _extract_model_name(raw: str) -> str:
+    """Normalize a model name that may be stored as a Python dict repr.
+
+    The settings store sometimes contains ``"{'name': 'mimo-v2.5-pro', ...}"``
+    instead of just ``"mimo-v2.5-pro"`` (a serialization bug in the model
+    catalog picker). This extracts the actual model name so the API receives a
+    valid model id.
+    """
+    raw = raw.strip()
+    if not raw.startswith("{"):
+        return raw
+    # Try ast.literal_eval (safe) first, then regex fallback.
+    try:
+        d = ast.literal_eval(raw)
+        if isinstance(d, dict) and "name" in d:
+            return str(d["name"])
+    except (ValueError, SyntaxError):
+        pass
+    m = re.search(r"['\"]name['\"]\s*:\s*['\"]([^'\"]+)['\"]", raw)
+    if m:
+        return m.group(1)
+    return raw
 
 
 def _provider_index(providers: list[dict] | None = None) -> dict[str, dict]:
@@ -90,7 +116,7 @@ def resolve(model_id: str, providers: list[dict] | None = None) -> ResolvedProvi
         label=provider.get("label", provider["id"]),
         base_url=provider.get("base_url", ""),
         api_key=provider.get("api_key", ""),
-        model_name=model_name,
+        model_name=_extract_model_name(model_name),
     )
 
 
@@ -108,10 +134,11 @@ def all_models() -> list[dict]:
     out: list[dict] = []
     for p in get_providers():
         for m in p.get("models", []):
+            name = _extract_model_name(m)
             out.append({
-                "id": f"{p['id']}/{m}",
-                "label": f"{p.get('label', p['id'])} — {m}",
+                "id": f"{p['id']}/{name}",
+                "label": f"{p.get('label', p['id'])} — {name}",
                 "provider": p["id"],
-                "model": m,
+                "model": name,
             })
     return out

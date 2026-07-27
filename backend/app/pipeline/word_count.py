@@ -111,7 +111,7 @@ def count_stripped_prose_words(filepath):
 
 
 def detect_project_type(base_dir):
-    if os.path.exists(os.path.join(base_dir, "manuscript", "chapters")):
+    if os.path.exists(os.path.join(base_dir, "manuscript")):
         return "novel"
     if os.path.exists(os.path.join(base_dir, "script", "scenes")):
         return "screenplay"
@@ -121,10 +121,12 @@ def detect_project_type(base_dir):
 
 
 def find_novel_chapters(base_dir):
-    chapters_dir = os.path.join(base_dir, "manuscript", "chapters")
+    chapters_dir = os.path.join(base_dir, "manuscript")
     if not os.path.exists(chapters_dir):
         return []
     files = glob.glob(os.path.join(chapters_dir, "*.md"))
+    # Filter out novel.md (the assembled manuscript) — it's not a chapter.
+    files = [f for f in files if os.path.basename(f) != "novel.md"]
 
     def sort_key(filepath):
         match = re.match(r"(\d+)", os.path.basename(filepath))

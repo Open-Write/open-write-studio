@@ -62,6 +62,12 @@ DEFAULT_SETTINGS: dict = {
     # critic/editorial phases use critic_model.
     "writer_model":       "",
     "critic_model":       "",
+    # Per-phase model routing. Maps pipeline phase names to "writer" or "critic".
+    # "writer" = use writer_model (or default_model if empty).
+    # "critic" = use critic_model (or default_model if empty).
+    # Unlisted phases fall back to the role-based default (writer for author
+    # phases, critic for critic/editorial phases).
+    "model_routing":      {},
     # Qualified model id for the orchestration-layer Planner (goal -> TaskPlan).
     # Empty = fall back to default_model.
     "planner_model":      "",
@@ -484,6 +490,26 @@ def get_critic_model() -> str:
     """Qualified model id for critic/editorial pipeline phases (A/B reader)."""
     settings = load_settings()
     return settings.get("critic_model", "") or settings.get("default_model", DEFAULT_SETTINGS["default_model"])
+
+
+def get_model_for_phase(phase: str) -> str:
+    """Return the qualified model id for a specific pipeline phase.
+
+    Checks model_routing first (user-configured per-phase override), then
+    falls back to the role-based default (writer for author phases, critic for
+    critic/editorial phases).
+    """
+    settings = load_settings()
+    routing = settings.get("model_routing", {})
+    choice = routing.get(phase, "")
+    if choice == "critic":
+        return get_critic_model()
+    if choice == "writer":
+        return get_writer_model()
+    # Default: critic/editorial use critic model, everything else uses writer.
+    if phase in ("critics", "editorial"):
+        return get_critic_model()
+    return get_writer_model()
 
 
 def get_planner_model() -> str:

@@ -101,7 +101,7 @@ Flags: `-SkipBackend` (reuse existing sidecar), `-Debug` (debug build).
 
 ## Running tests
 
-**Backend (54 tests):**
+**Backend (54+ tests):**
 
 ```powershell
 cd backend
@@ -118,6 +118,7 @@ python tests/test_orchestrator.py      # 7 pipeline orchestrator tests
 python tests/test_profile_context.py   # 7 profile context tests
 python tests/test_providers.py         # multi-provider routing tests
 python tests/test_pipeline_routes.py   # 12 HTTP end-to-end tests (needs fastapi + httpx)
+python tests/test_pipeline_outputs.py  # 27 output catalog + control + chat tests
 python tests/test_harness.py           # harness layer tests
 ```
 
@@ -142,10 +143,18 @@ npx tsc --noEmit
 - **Smart Advisor** — Readability, Structure, and Context passes with inline highlights and accept/ignore/re-cast controls
 - **Writing Companion** — chat panel for brainstorming, voice work, ad-hoc questions
 - **Open-Write Pipeline** — autonomous, resumable phase-by-phase production: bible → voice → editorial lock → (per-unit: architect → writer → critics ×5 → editorial → verify) → assemble → adversarial read → finalize
+- **Pipeline Output Library** — browsable artifact catalog organized by category (Bible / Voice Experiment / Design Documents / Prose / Reviews / Manifest) with markdown and JSON rendering
+- **Pipeline Companion** — conversational chat that knows the run state, can propose creative brief changes (Apply to Brief), and can trigger phase re-runs
+- **Auto-run** — one-click automatic pipeline execution with 2-second delay between phases, stops on complete or fail
+- **User input overrides** — provide your own content for any pipeline phase instead of generating via the model (paste your own bible, voice spec, chapter prose, etc.)
+- **Per-stage model routing** — assign "Primary" or "Critic" model to each pipeline phase via settings
+- **Post-critics revision loop** — when critics say REVISE, the writer automatically rewrites with critic feedback (max 2 retries per chapter)
+- **Rerun with feedback** — when restarting a project with existing material, choose "Revise with Existing Feedback" to rewrite using existing critic reports
 - **Deterministic completion gate** — word counting, manifest building, verification, linting, SHA-256-bound completion certificate
 - **Multi-provider LLM routing** — 22 providers (OpenRouter, OpenAI, Anthropic, Google AI, Mistral, Groq, xAI, DeepSeek, GLM, Qwen, LM Studio, Ollama, and more) with a curated model catalog organized by tier and strength. Local providers run models on your hardware with no API key.
 - **Harness layer** — goal → planner → router → runner → verifier → reporter orchestration above the pipeline
 - **Export** — full manuscript, dated snapshots, TXT/DOCX/EPUB/Markdown
+- **CLI debugging tool** — `backend/tools/ow_cli.py` for driving the pipeline from the command line
 
 ## Project structure
 
@@ -158,8 +167,9 @@ backend/                 Python FastAPI backend (managed by uv)
     main.py              FastAPI entry + CORS + router registration
     routers/             API routes (projects, documents, profiles, ai, pipeline, ...)
     ai/                  LLM routing, model catalog (26 curated models), prompts, sanitizer
-    pipeline/            Open-Write gate toolchain (word_count, manifest, verify, lints, finalize, critics, orchestrator)
+    pipeline/            Open-Write gate toolchain (word_count, manifest, verify, lints, finalize, critics, orchestrator, outputs, profile_context)
     harness/             Architect protocols (planner, router, runner, verifier, reporter)
+    tools/               CLI debugging tool (ow_cli.py)
   tests/                 pytest test suite
 openwrite/               READ-ONLY reference of the Open-Write methodology
 docs/                    Product scope, architecture, features, roadmap, releasing
