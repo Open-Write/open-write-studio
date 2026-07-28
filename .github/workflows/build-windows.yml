@@ -1,0 +1,118 @@
+# .github/workflows/build-windows.yml
+# Builds the Open-Write Windows installer from source on GitHub-hosted runners.
+# Produces unsigned .msi and -setup.exe artifacts for later code signing.
+
+name: Build Windows Installer
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      # ── Checkout ────────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Python (for PyInstaller backend sidecar) ────────────────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install Python dependencies
+        working-directory: backend
+        run: uv sync --dev
+
+      # ── Node.js (for React frontend + Tauri CLI) ───────────────────────────
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: app
+        run: npm install
+
+      # ── Rust (for Tauri shell compilation) ──────────────────────────────────
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "app/src-tauri -> target"
+
+      # ── Step 1: Build backend sidecar via PyInstaller ───────────────────────
+      - name: Build backend sidecar (PyInstaller)
+        working-directory: backend
+        run: uv run pyinstaller backend.spec --clean --noconfirm
+
+      - name: Copy sidecar to Tauri binaries
+        shell: pwsh
+        run: |
+          $dest = "app/src-tauri/binaries/open-write-backend-x86_64-pc-windows-msvc.exe"
+          Copy-Item -Path "backend/dist/open-write-backend.exe" -Destination $dest -Force
+          $size = [math]::Round((Get-Item $dest).Length / 1MB, 1)
+          Write-Host "Sidecar copied: $dest ($size MB)"
+
+      # ── Step 2: Build Tauri bundle (frontend + shell + installer) ───────────
+      - name: Build Tauri installer
+        working-directory: app
+        run: npx tauri build
+
+      # ── Locate build outputs ────────────────────────────────────────────────
+      - name: List build artifacts
+        shell: pwsh
+        run: |
+          $bundleDir = "app/src-tauri/target/release/bundle"
+          Get-ChildItem -Path $bundleDir -Recurse -Include "*.msi","*.exe" | ForEach-Object {
+            $size = [math]::Round($_.Length / 1MB, 1)
+            Write-Host "$($_.FullName) ($size MB)"
+          }
+
+      # ── Upload installer artifacts ──────────────────────────────────────────
+      - name: Upload MSI installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-installer-msi
+          path: app/src-tauri/target/release/bundle/msi/*.msi
+          if-no-files-found: error
+
+      - name: Upload NSIS setup executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-installer-exe
+          path: app/src-tauri/target/release/bundle/nsis/*-setup.exe
+          if-no-files-found: error
+
+      # ── SignPath code signing (future) ──────────────────────────────────────
+      # TODO: Add SignPath signing step here once a SignPath organization ID
+      # and API token are configured as repository secrets. The signing step
+      # will:
+      #   1. Use signpath/github-action-sign or similar
+      #   2. Reference the unsigned artifact uploaded above
+      #   3. Produce a signed artifact as a replacement
+      #
+      # Required secrets (to be created):
+      #   SIGNPATH_ORG_ID         - SignPath organization GUID
+      #   SIGNPATH_API_TOKEN      - SignPath API token
+      #   SIGNPATH_POLICY_SLUG    - Signing policy slug
+      #
+      # The GitHub Actions workflow must also be registered as a "trusted
+      # build system" in SignPath's project settings, which requires that
+      # the installer is compiled from source during the workflow run
+      # (not uploaded as a pre-built file). This workflow satisfies that
+      # requirement by running the full PyInstaller + Tauri build chain.
