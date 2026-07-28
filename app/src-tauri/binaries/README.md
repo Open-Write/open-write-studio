@@ -1,49 +1,51 @@
 # Sidecar binaries
 
 This folder holds the **bundled Python backend** that Tauri ships inside the
-Open-Write installer in release builds. The contents are produced by
-`scripts/build-backend.ps1` from the repo root.
-
-## What's here
-
-A frozen-Python `.exe` of the FastAPI backend, named with the platform suffix
-Tauri's sidecar mechanism expects:
+Open-Write installer in release builds. The file produced here is a frozen
+(frozen-by-PyInstaller) copy of the FastAPI backend, named with the platform
+suffix Tauri's sidecar mechanism expects:
 
 - `open-write-backend-x86_64-pc-windows-msvc.exe` -- Windows x64
+- `open-write-backend-aarch64-apple-darwin`       -- macOS arm64
+- `open-write-backend-x86_64-unknown-linux-gnu`   -- Linux x64
 
-On other platforms you'd add `open-write-backend-aarch64-apple-darwin`,
-`open-write-backend-x86_64-unknown-linux-gnu`, etc.
+## The binary is NOT committed to the repo
 
-## Why a placeholder is committed
+No sidecar `.exe` is checked into git. The `tauri.conf.json` `externalBin`
+entry is `binaries/open-write-backend`, and the real binary for each target
+is built from source at release time and placed in this folder. The folder
+is gitignored (`open-write-backend-*`, see `.gitignore` in this directory and
+the backstop rule in the repo-root `.gitignore`) so a built binary can never
+be committed accidentally.
 
-Tauri's build script verifies that every path in `tauri.conf.json`'s
-`externalBin` array exists -- even during `cargo check` and `npm run tauri
-dev`. Without a file present at the configured path, the Rust crate fails
-to compile, breaking dev mode entirely.
+## Where the file comes from
 
-The committed `.exe` is a zero-byte placeholder so the build system stops
-complaining. It is **never executed** in dev (the sidecar spawn in
-`lib.rs` is gated by `#[cfg(not(debug_assertions))]`), and is **always
-overwritten** by the real backend exe before `npm run tauri build` runs
-during a release.
+The binary is produced fresh on every release:
 
-## Building the real binary
+- **In CI (the source of truth for releases):** `.github/workflows/build-windows.yml`
+  runs `uv run pyinstaller backend.spec` to compile the backend, copies the
+  resulting `backend/dist/open-write-backend.exe` into this folder, then runs
+  `npx tauri build`. Before the PyInstaller step the workflow deletes any
+  sidecar already present in this folder, and after the copy it verifies the
+  file exists -- so the installer always bundles a sidecar built during that
+  same run, never a leftover from a previous build.
 
-From the repo root:
+- **Locally:** run the PyInstaller step yourself from the repo root:
 
-```powershell
-.\scripts\build-backend.ps1
-```
+  ```powershell
+  .\scripts\build-backend.ps1
+  ```
 
-This calls PyInstaller against `backend/backend.spec` and copies the
-output `.exe` into this folder, replacing the placeholder. Re-run
-whenever you change the FastAPI backend code and want to test the
-release build flow locally.
+  This calls PyInstaller against `backend/backend.spec` and copies the output
+  into this folder. Re-run it whenever you change the FastAPI backend code and
+  want to test the release build flow locally.
 
-## Why this folder is partially gitignored
+## Note for local dev mode
 
-The placeholder `.exe` is committed so dev mode works for fresh clones,
-but **real PyInstaller-built binaries should never be committed** -- they
-are 40-80 MB each and would bloat repo history quickly. The `.gitignore`
-in this folder permits the placeholder name only; any other build
-artifacts here are ignored.
+`cargo check` / `npm run tauri dev` require that the `externalBin` path exists.
+Because no binary is committed, a fresh clone has no file here, so dev mode
+needs a sidecar produced first -- run `scripts/build-backend.ps1` (or the
+PyInstaller step manually) before starting `npm run tauri dev`. The sidecar
+spawn itself is gated by `#[cfg(not(debug_assertions))]` in `lib.rs`, so the
+committed-vs-built distinction only affects whether the Tauri shell compiles,
+not whether a dev process is launched at runtime.

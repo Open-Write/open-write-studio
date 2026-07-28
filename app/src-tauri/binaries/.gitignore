@@ -1,0 +1,10 @@
+# Tauri sidecar binaries are built fresh from source on every release:
+#   - in CI:   .github/workflows/build-windows.yml  (PyInstaller step)
+#   - locally: scripts/build-backend.ps1
+# They are 20-80 MB, reproducible, and intentionally NOT committed to the repo.
+# This ignore matches every platform target Tauri's externalBin naming produces:
+#   open-write-backend-x86_64-pc-windows-msvc.exe   (Windows x64)
+#   open-write-backend-aarch64-apple-darwin          (macOS arm64)
+#   open-write-backend-x86_64-unknown-linux-gnu      (Linux x64)
+#   ...etc. README.md and this .gitignore itself are not matched.
+open-write-backend-*

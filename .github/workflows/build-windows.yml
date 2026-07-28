@@ -56,6 +56,20 @@ jobs:
           workspaces: "app/src-tauri -> target"
 
       # ── Step 1: Build backend sidecar via PyInstaller ───────────────────────
+      # Pre-clean: guarantee no stale sidecar can ever be bundled. The folder is
+      # gitignored so a fresh checkout has nothing here, but this makes the
+      # workflow correct even if a binary is ever left behind from a prior run.
+      - name: Remove any stale sidecar before build
+        shell: pwsh
+        run: |
+          $dest = "app/src-tauri/binaries/open-write-backend-x86_64-pc-windows-msvc.exe"
+          if (Test-Path $dest) {
+            Remove-Item $dest -Force
+            Write-Host "Removed pre-existing sidecar: $dest"
+          } else {
+            Write-Host "No pre-existing sidecar found at: $dest (clean checkout)"
+          }
+
       - name: Build backend sidecar (PyInstaller)
         working-directory: backend
         run: uv run pyinstaller backend.spec --clean --noconfirm
@@ -67,6 +81,17 @@ jobs:
           Copy-Item -Path "backend/dist/open-write-backend.exe" -Destination $dest -Force
           $size = [math]::Round((Get-Item $dest).Length / 1MB, 1)
           Write-Host "Sidecar copied: $dest ($size MB)"
+
+      - name: Verify fresh sidecar exists before bundling
+        shell: pwsh
+        run: |
+          $dest = "app/src-tauri/binaries/open-write-backend-x86_64-pc-windows-msvc.exe"
+          if (-not (Test-Path $dest)) {
+            Write-Host "::error::Sidecar not found at $dest after build+copy. PyInstaller build or copy failed; refusing to bundle a stale or missing binary."
+            exit 1
+          }
+          $size = [math]::Round((Get-Item $dest).Length / 1MB, 1)
+          Write-Host "Verified fresh sidecar present: $dest ($size MB)"
 
       # ── Step 2: Build Tauri bundle (frontend + shell + installer) ───────────
       - name: Build Tauri installer

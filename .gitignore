@@ -25,12 +25,14 @@ app/src-tauri/target/
 backend/build/
 backend/dist/
 
-# Real PyInstaller-built sidecar binaries are 40-80 MB and reproducible.
-# We DO commit the zero-byte placeholder named below (so dev mode compiles
-# without requiring everyone to run build-backend first), but any larger
-# .exe in that folder is a build artifact and should NOT be committed.
-# Use `git add -f` if you ever need to override this.
-app/src-tauri/binaries/*-*.exe.bak
+# Real PyInstaller-built sidecar binaries are 20-80 MB and reproducible, so
+# they are NEVER committed. They are built fresh on every release:
+#   - in CI:   .github/workflows/build-windows.yml  (PyInstaller step)
+#   - locally: scripts/build-backend.ps1
+# The actual ignore rule lives next to the binaries so it matches every
+# Tauri platform target (see app/src-tauri/binaries/.gitignore). Repeated
+# here as a backstop so the rule applies regardless of local folder layout.
+app/src-tauri/binaries/open-write-backend-*
 
 # ── Release artifacts ────────────────────────────────────────────────────────
 # scripts/release.ps1 stages .msi, .sig, latest.json here before manual
