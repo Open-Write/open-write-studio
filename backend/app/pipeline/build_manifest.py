@@ -25,25 +25,40 @@ from datetime import datetime
 
 
 def count_chapters_in_outline(outline_path):
+    """Count units (chapters/scenes/episodes) from an outline file.
+
+    Detects multiple heading conventions:
+    - Novel: ## Chapter N, ## Ch. N, ## N.
+    - Screenplay: ## Scene N, ## Scene N: Title
+    - TV: ## Episode N, ## S01EXX, ## S01E01 - Title
+    """
     with open(outline_path, "r", encoding="utf-8-sig") as f:
         text = f.read()
     patterns = [
+        # Novel
         r'^##\s+Chapter\s+(\d+)',
         r'^##\s+Ch\.?\s*(\d+)',
         r'^#\s+Chapter\s+(\d+)',
         r'^##\s+\d+\.',
         r'^###?\s+Chapter\s+(\d+)',
+        # Screenplay
+        r'^##\s+Scene\s+(\d+)',
+        r'^###?\s+Scene\s+(\d+)',
+        # TV
+        r'^##\s+Episode\s+(\d+)',
+        r'^##\s+S01E(\d+)',
+        r'^###?\s+Episode\s+(\d+)',
     ]
-    chapters = set()
+    units = set()
     for line in text.split("\n"):
         for pat in patterns:
             m = re.match(pat, line.strip(), re.IGNORECASE)
             if m:
                 try:
-                    chapters.add(int(m.group(1)))
+                    units.add(int(m.group(1)))
                 except (IndexError, ValueError):
-                    chapters.add(len(chapters) + 1)
-    if not chapters:
+                    units.add(len(units) + 1)
+    if not units:
         heading_count = 0
         for line in text.split("\n"):
             stripped = line.strip()
@@ -51,37 +66,78 @@ def count_chapters_in_outline(outline_path):
                 heading_count += 1
         if heading_count > 0:
             return heading_count
-    return len(chapters) if chapters else 0
+    return len(units) if units else 0
 
 
 def build_manifest(chapter_count, project_name="Untitled", project_type="novel", word_floor=800):
     sections = []
 
-    pre_items = [
-        {"label": "Bible: concept", "path": "bible/01_concept.md", "check": "nonempty"},
-        {"label": "Bible: outline locked", "path": "bible/04_outline.md", "check": "nonempty"},
-        {"label": "Bible: format rules", "path": "bible/07_format_rules.md", "check": "nonempty"},
-        {"label": "Locked voice spec", "check": "glob_count", "pattern": "bible/LOCKED_VOICE_SPEC*", "min_count": 1},
-    ]
+    # Pre-production items vary by project type.
+    if project_type == "screenplay":
+        pre_items = [
+            {"label": "Bible: concept", "path": "bible/01_concept.md", "check": "nonempty"},
+            {"label": "Bible: outline locked", "path": "bible/04_outline.md", "check": "nonempty"},
+            {"label": "Bible: format rules", "path": "bible/07_format_rules.md", "check": "nonempty"},
+            {"label": "Locked voice spec", "check": "glob_count", "pattern": "bible/LOCKED_VOICE_SPEC*", "min_count": 1},
+        ]
+        unit_label = "Scene"
+        unit_dir = "script/scenes"
+        unit_ext = ".fountain"
+        unit_prefix = "{:02d}"
+        assembled_path = "script/screenplay.fountain"
+    elif project_type == "tv":
+        pre_items = [
+            {"label": "Bible: series concept", "path": "bible/01_series_concept.md", "check": "nonempty"},
+            {"label": "Bible: season arc", "path": "bible/04_season_arc.md", "check": "nonempty"},
+            {"label": "Bible: format rules", "path": "bible/06_format_rules.md", "check": "nonempty"},
+            {"label": "Locked voice spec", "check": "glob_count", "pattern": "bible/LOCKED_VOICE_SPEC*", "min_count": 1},
+        ]
+        unit_label = "Episode"
+        unit_dir = "scripts/scenes"
+        unit_ext = ".fountain"
+        unit_prefix = "S01E{:02d}"
+        assembled_path = "scripts/Season_1.fountain"
+    else:
+        pre_items = [
+            {"label": "Bible: concept", "path": "bible/01_concept.md", "check": "nonempty"},
+            {"label": "Bible: outline locked", "path": "bible/04_outline.md", "check": "nonempty"},
+            {"label": "Bible: format rules", "path": "bible/07_format_rules.md", "check": "nonempty"},
+            {"label": "Locked voice spec", "check": "glob_count", "pattern": "bible/LOCKED_VOICE_SPEC*", "min_count": 1},
+        ]
+        unit_label = "Chapter"
+        unit_dir = "manuscript"
+        unit_ext = ".md"
+        unit_prefix = "{:03d}"
+        assembled_path = "manuscript/novel.md"
+
     sections.append({"name": "Pre-Production", "items": pre_items})
 
     for ch in range(1, chapter_count + 1):
+        prefix = unit_prefix.format(ch)
+        if project_type == "tv":
+            draft_path = f"{unit_dir}/S01E{ch:02d}/*{unit_ext}"
+            plan_path = f"critic_outputs/chapter_{ch}_plan.md"
+        else:
+            draft_path = f"{unit_dir}/{prefix}_*{unit_ext}"
+            plan_path = f"critic_outputs/chapter_{ch}_plan.md"
+
         ch_items = [
-            {"label": f"Ch{ch} plan", "path": f"critic_outputs/chapter_{ch}_plan.md", "check": "nonempty"},
-            {"label": f"Ch{ch} draft", "check": "word_floor", "path": f"manuscript/{ch:03d}_*.md", "floor": word_floor},
-            {"label": f"Ch{ch} lint pass", "check": "lint_pass", "path": f"manuscript/{ch:03d}_*.md"},
-            {"label": f"Ch{ch} show critic substance", "check": "critic_substance", "pattern": f"critic_outputs/chapter_{ch}_show*"},
-            {"label": f"Ch{ch} voice critic substance", "check": "critic_substance", "pattern": f"critic_outputs/chapter_{ch}_voice*"},
-            {"label": f"Ch{ch} palette critic substance", "check": "critic_substance", "pattern": f"critic_outputs/chapter_{ch}_palette*"},
-            {"label": f"Ch{ch} continuity critic substance", "check": "critic_substance", "pattern": f"critic_outputs/chapter_{ch}_continuity*"},
-            {"label": f"Ch{ch} naturalism critic substance", "check": "critic_substance", "pattern": f"critic_outputs/chapter_{ch}_naturalism*"},
-            {"label": f"Ch{ch} editorial substance", "check": "critic_substance", "pattern": f"coverage_reports/editorial_report_ch{ch}*"},
+            {"label": f"{unit_label[:3]}{ch} plan", "path": plan_path, "check": "nonempty"},
+            {"label": f"{unit_label[:3]}{ch} draft", "check": "word_floor", "path": draft_path, "floor": word_floor},
+            {"label": f"{unit_label[:3]}{ch} lint pass", "check": "lint_pass", "path": draft_path},
+            {"label": f"{unit_label[:3]}{ch} show critic substance", "check": "critic_substance", "pattern": f"critic_outputs/chapter_{ch}_show*"},
+            {"label": f"{unit_label[:3]}{ch} voice critic substance", "check": "critic_substance", "pattern": f"critic_outputs/chapter_{ch}_voice*"},
+            {"label": f"{unit_label[:3]}{ch} palette critic substance", "check": "critic_substance", "pattern": f"critic_outputs/chapter_{ch}_palette*"},
+            {"label": f"{unit_label[:3]}{ch} continuity critic substance", "check": "critic_substance", "pattern": f"critic_outputs/chapter_{ch}_continuity*"},
+            {"label": f"{unit_label[:3]}{ch} naturalism critic substance", "check": "critic_substance", "pattern": f"critic_outputs/chapter_{ch}_naturalism*"},
+            {"label": f"{unit_label[:3]}{ch} editorial substance", "check": "critic_substance", "pattern": f"coverage_reports/editorial_report_ch{ch}*"},
         ]
-        sections.append({"name": f"Chapter {ch}", "items": ch_items})
+        sections.append({"name": f"{unit_label} {ch}", "items": ch_items})
 
     post_items = [
         {"label": "Adversarial read substance", "check": "critic_substance", "pattern": "coverage_reports/*adversarial*"},
-        {"label": "Assembly integrity", "check": "assembly_match", "assembled_path": "manuscript/novel.md", "chapter_pattern": "manuscript/*.md"},
+        {"label": "Assembly integrity", "check": "assembly_match", "assembled_path": assembled_path,
+         "chapter_pattern": f"{unit_dir}/*{unit_ext}" if project_type != "tv" else f"{unit_dir}/S01E*/*{unit_ext}"},
         {"label": "Callback ledger", "path": "state/callback_ledger.json", "check": "nonempty"},
         {"label": "Convention ledger", "path": "state/convention_ledger.json", "check": "nonempty"},
     ]

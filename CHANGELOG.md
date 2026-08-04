@@ -15,6 +15,54 @@ entry while working on a feature, append it under Unreleased.
 
 ### Added
 
+- **Character creation overhaul.** Characters now support a `character_kind` field ("main" or "side"). Main characters get the full trait-block editor; side/background characters get a simplified single-field-per-section template. The Profile Builder gains a Quick Build panel (randomized spine, traits, and overview generation), a Spine Pickers dropdown for archetypes, and a Character Name Generator with 20 cultures x 5 eras + 12 fantasy races backed by a SQLite names database (`backend/app/data/names/`). Fantasy names support dwarves, orcs, elves, and other races with per-race recursion rules.
+
+- **Scene beats system.** Scene summaries now support a `## Beats` checklist — a list of plot beats the writer wants to hit in each scene. Beats render as checkboxes in the sidebar under each scene. New `POST /api/documents/scene-beats` endpoint updates only the beats section without touching prose. Beats are preserved across AI summary regeneration.
+
+- **Draft mode (Writing Companion).** A new "Draft" toggle in the Writing Companion lets the writer generate story prose from attached profile materials. The AI writes 800–1200 words of scene prose grounded in the attached character profiles, using a dedicated draft system prompt and cooler temperature (0.6) for voice fidelity.
+
+- **Enhance mode (Writing Companion).** A new "Enhance" toggle rewrites a highlighted passage with level-governed expansion. Three levels: Restate (tighten), Default (balanced), Expanded (add detail). Surrounding paragraphs are sent as grounding context; only the target passage is rewritten.
+
+- **Scene break suggestions.** New `POST /api/ai/suggest-scene-breaks` endpoint reads a chapter and proposes where to place `---` scene breaks. Each suggestion is anchored to a verbatim quote with severity (strong / moderate / subtle) and pacing analysis. Review-only — the writer inserts breaks by hand.
+
+- **Reasoning toggle.** A new toggle in the Writing Companion surfaces the model's reasoning trace alongside the answer for reasoning-capable models (DeepSeek-R1, o1-class, etc.). The toggle is hidden when the active model does not support reasoning. Models fetched from OpenRouter now include a `supports_reasoning` flag driven by `supported_parameters`.
+
+- **Canon / Reference toggle.** When profile chips are attached, a new toggle lets the writer declare whether the AI should treat attached profiles as canon (enforce strictly) or reference (the writer's direction wins). Drives a `context_stance_instruction()` appended to the system prompt.
+
+- **Materials-content echo.** The Writing Companion now echoes back the materials message (profile chips + chapter text) so the frontend can persist it into chat history as a hidden message. This fixes "the AI forgot my character's voice" on follow-up turns — the profiles now stay in the conversation across the full session.
+
+- **Book Details panel.** New project-level fields: Theme, Setting, Point of View, Tense, Target Audience, and Target Word Count. Stored in `project.json` (except target_word_count, which lives in outline frontmatter). These fields are automatically injected into every AI system prompt via `_build_story_context()` so the model always knows the project's narrative parameters.
+
+- **Chapter rename cascade.** `POST /api/documents/rename-chapter` now renames the file (preserving NN-prefix, re-slugifying) and cascades: moves chapter summary, scene summary folder, updates `structure.json`, and migrates progress history rows. Returns cascade flags so the UI can report what moved.
+
+- **Per-chapter word count progress.** New `GET /api/progress/chapters` endpoint returns per-chapter word counts and targets for the progress breakdown panel.
+
+- **Quick Overview for side characters.** New `POST /api/ai/generate-quick-overview` endpoint generates a compact Overview for side/background characters from their Quick Build fields (story function, want, raw material).
+
+- **Prompt caching toggle.** New `prompt_caching` setting gates Anthropic-style `cache_control` headers on repeated requests. Only sent to model families that support it (Anthropic Claude). Reduces token costs for sessions with static context (profile chips, style guide).
+
+### Fixed
+
+- **OpenRouter provider resolution.** Fixed a critical bug where model IDs like `"openai/gpt-4o-mini"` (standard OpenRouter model names) were incorrectly resolved to the OpenAI provider directly (which has no API key) instead of routing through OpenRouter. The `resolve()` function now checks whether a matched provider has an API key before committing; unconfigured providers fall through to OpenRouter with the full model ID.
+
+- **Test connection endpoint.** Fixed `POST /api/settings/test-connection` not finding keys saved through the multi-provider Settings UI. Now uses `get_providers()` which handles legacy key migration.
+
+- **Writing Companion clear.** Fixed `clearWritingCompanionChat` not resetting established chip keys, chapter-established flag, context chips, and chat input. Previously, after clearing, the next message still shipped stale profiles and skipped chapter text.
+
+- **Sidebar title sync.** After saving a chapter, the sidebar title now immediately reflects the saved H1 heading if the writer edited it in the editor.
+
+- **Chat timeout.** Increased the Writing Companion hard timeout from 180s to 300s (5 minutes) to accommodate slow reasoning models.
+
+- **Chapter numbering after delete.** `create_chapter` now uses `max(prefix)+1` instead of `len(existing)+1` to avoid filename collisions when gaps exist (e.g., files 01- and 03- on disk, len+1 would produce another "03-").
+
+- **Tolerant profile parsing.** Profile files with no `---` frontmatter now get default metadata + body treated as Overview instead of raising a 400 error. Trait blocks that don't parse as YAML lists are kept as plain content instead of being silently dropped.
+
+- **404 model deprecation guidance.** When a project's model is deprecated on OpenRouter, the error message now includes actionable guidance (the provider's own error message and a suggestion to update the model in Settings) instead of a cryptic HTTP 404.
+
+### Changed
+
+- **Screenplay and TV pipeline support.** The autonomous pipeline now supports screenplay and TV projects in addition to novels. When creating a project with story_type "screenplay" or "tv_pilot", the pipeline automatically adapts: screenplay projects use Fountain format (`.fountain` files), scene-based units, and screenplay-specific assembly; TV projects use episode-based units with season arc structure. The pipeline labels, prompts, manifest items, and assembly logic all branch on project type. The PhaseSpec labels adapt (e.g. "Screenwriter" instead of "Prose writer", "Scene Critics" instead of chapter critics). Screenplay projects create `script/scenes/` directories; TV projects create `scripts/scenes/` directories. The manifest builder detects scene/episode headings in addition to chapter headings. Type-aware system prompts load from `screenplay_template/.kilo/` or `tv_template/.kilo/` with fallback to novel. All existing novel tests pass — the changes are backward compatible.
+
 - **Pipeline Output Library.** The Outputs tab in the Pipeline screen shows a browsable artifact catalog organized by category: Bible (concept, outline, format rules), Voice Experiment (candidates, review, locked spec), Design Documents (outline + architect plans per chapter), Prose (chapter manuscripts + assembled novel), Reviews (5 critics per chapter + editorial + adversarial read), and Manifest & State. Each artifact renders as formatted markdown or JSON with word counts. All files are read from disk (path-traversal-safe) — the library is strictly read-only.
 
 - **Pipeline Companion chat.** The Chat tab in the Pipeline screen provides a conversational interface that knows the current run state, phase, and a summary of which artifacts exist. The companion can propose a revised creative brief (surfaced as a one-click "Apply to Brief" card) and trigger phase re-runs. Multi-turn with session history.

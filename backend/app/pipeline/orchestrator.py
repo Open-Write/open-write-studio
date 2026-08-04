@@ -44,10 +44,126 @@ _REFERENCE_ROOT = os.environ.get(
     "OPENWRITE_REFERENCE",
     os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "openwrite")),
 )
-_RULE_DIR = os.path.join(_REFERENCE_ROOT, "novel_template", ".kilo")
 
 RUN_STATE_FILENAME = "pipeline_run.json"
 RUN_STATE_REL = os.path.join("state", RUN_STATE_FILENAME)
+
+
+# ── Project type configuration ───────────────────────────────────────────────
+# The pipeline structure (bible → voice → editorial_lock → per-unit loop →
+# assemble → adversarial → finalize) is the same for all project types. What
+# changes is the unit name, file paths, rule directory, and assembly strategy.
+# This config captures those differences so the executors can branch cleanly.
+
+@dataclass
+class ProjectTypeConfig:
+    project_type: str        # "novel" | "screenplay" | "tv"
+    rule_dir: str            # absolute path to .kilo rules directory
+    unit_label: str          # "chapter" | "scene" | "episode"
+    unit_label_plural: str   # "chapters" | "scenes" | "episodes"
+    unit_dir: str            # relative: "manuscript" | "script/scenes" | "scripts/scenes"
+    unit_ext: str            # ".md" | ".fountain"
+    unit_prefix: str         # "{:03d}" | "{:02d}" — format string for unit number
+    assembled_path: str      # relative: "manuscript/novel.md" | "script/screenplay.fountain"
+    outline_candidates: list[str]  # ordered list of outline file candidates
+    word_floor: int          # default minimum words per unit
+    bible_heading_hint: str  # instruction for outline heading style
+
+    def unit_rel(self, unit_number: int, project: str = "") -> str:
+        """Relative path for a unit file (scene/chapter/episode)."""
+        prefix = self.unit_prefix.format(unit_number)
+        # For TV, the unit directory includes the episode code.
+        if self.project_type == "tv":
+            # TV episodes live in scripts/scenes/S01EXX/NN_scene.fountain
+            episode_dir = os.path.join(self.unit_dir, f"S01E{unit_number:02d}")
+            default = os.path.join(episode_dir, f"{1:02d}_scene{self.unit_ext}")
+        else:
+            default = os.path.join(self.unit_dir, f"{prefix}_{'chapter' if self.project_type == 'novel' else 'scene'}{self.unit_ext}")
+        if not project:
+            return default
+        # Try to find an existing file matching the prefix pattern.
+        import glob as _glob
+        if self.project_type == "tv":
+            pattern = os.path.join(project, self.unit_dir, f"S01E{unit_number:02d}", f"*{self.unit_ext}")
+        else:
+            pattern = os.path.join(project, self.unit_dir, f"{prefix}_*{self.unit_ext}")
+        matches = sorted(_glob.glob(pattern))
+        if matches:
+            return os.path.relpath(matches[0], project)
+        return default
+
+
+# Type configs for each project type.
+_TYPE_CONFIGS: dict[str, ProjectTypeConfig] = {
+    "novel": ProjectTypeConfig(
+        project_type="novel",
+        rule_dir=os.path.join(_REFERENCE_ROOT, "novel_template", ".kilo"),
+        unit_label="chapter",
+        unit_label_plural="chapters",
+        unit_dir="manuscript",
+        unit_ext=".md",
+        unit_prefix="{:03d}",
+        assembled_path="manuscript/novel.md",
+        outline_candidates=["notes/outline.md", "bible/04_outline.md", "bible/04_season_arc.md"],
+        word_floor=800,
+        bible_heading_hint="The outline must use '## Chapter N' headings so the chapter count can be detected.",
+    ),
+    "screenplay": ProjectTypeConfig(
+        project_type="screenplay",
+        rule_dir=os.path.join(_REFERENCE_ROOT, "screenplay_template", ".kilo"),
+        unit_label="scene",
+        unit_label_plural="scenes",
+        unit_dir="script/scenes",
+        unit_ext=".fountain",
+        unit_prefix="{:02d}",
+        assembled_path="script/screenplay.fountain",
+        outline_candidates=["notes/outline.md", "bible/04_outline.md"],
+        word_floor=200,
+        bible_heading_hint="The outline must use '## Scene N' headings so the scene count can be detected.",
+    ),
+    "tv": ProjectTypeConfig(
+        project_type="tv",
+        rule_dir=os.path.join(_REFERENCE_ROOT, "tv_template", ".kilo"),
+        unit_label="episode",
+        unit_label_plural="episodes",
+        unit_dir="scripts/scenes",
+        unit_ext=".fountain",
+        unit_prefix="S01E{:02d}",
+        assembled_path="scripts/Season_1.fountain",
+        outline_candidates=["notes/outline.md", "bible/04_season_arc.md", "bible/04_outline.md"],
+        word_floor=200,
+        bible_heading_hint="The outline must use '## Episode N' or '## S01EXX' headings so the episode count can be detected.",
+    ),
+}
+
+
+def get_type_config(project_type: str) -> ProjectTypeConfig:
+    """Return the config for a project type, falling back to novel."""
+    return _TYPE_CONFIGS.get(project_type, _TYPE_CONFIGS["novel"])
+
+
+def _detect_project_type(project: str) -> str:
+    """Detect project type from project.json or filesystem."""
+    # Try project.json first.
+    pj = os.path.join(project, "project.json")
+    if os.path.isfile(pj):
+        try:
+            with open(pj, "r", encoding="utf-8-sig") as f:
+                data = json.load(f)
+            st = data.get("story_type", "")
+            if st in ("screenplay", "tv_pilot"):
+                return "tv" if st == "tv_pilot" else "screenplay"
+            return "novel"
+        except Exception:
+            pass
+    # Fallback: filesystem detection.
+    from .word_count import detect_project_type
+    detected = detect_project_type(project)
+    if detected == "screenplay":
+        return "screenplay"
+    if detected == "tv":
+        return "tv"
+    return "novel"
 
 
 # ── Run-state writer serialization ────────────────────────────────────────────
@@ -222,6 +338,47 @@ PHASE_SPECS: dict[str, PhaseSpec] = {
 }
 
 
+# ── Type-aware phase labels ──────────────────────────────────────────────────
+# The default labels in PHASE_SPECS are novel-centric. For screenplay/TV some
+# phases need different labels (e.g. "writer" → "Screenwriter"). This mapping
+# overrides only the phases that differ; unlisted phases use the default label.
+
+_TYPE_LABEL_OVERRIDES: dict[str, dict[str, str]] = {
+    "screenplay": {
+        "architect": "Scene Architect",
+        "writer": "Screenwriter",
+        "critics": "Scene Critics (show/voice/palette/continuity/naturalism)",
+        "editorial": "Scene Editorial Eval",
+        "verify_unit": "Verify (per scene)",
+        "assemble": "Assemble Screenplay",
+        "adversarial": "Adversarial Read (full script)",
+    },
+    "tv": {
+        "architect": "Episode Architect",
+        "writer": "Episode Writer",
+        "critics": "Episode Critics (show/voice/palette/continuity/naturalism)",
+        "editorial": "Episode Editorial Eval",
+        "verify_unit": "Verify (per episode)",
+        "assemble": "Assemble Season",
+        "adversarial": "Adversarial Read (full season)",
+    },
+}
+
+
+def get_phase_label(phase_key: str, project_type: str = "novel") -> str:
+    """Return the type-appropriate label for a pipeline phase."""
+    overrides = _TYPE_LABEL_OVERRIDES.get(project_type, {})
+    if phase_key in overrides:
+        return overrides[phase_key]
+    spec = PHASE_SPECS.get(phase_key)
+    return spec.label if spec else phase_key
+
+
+def get_all_phase_labels(project_type: str = "novel") -> dict[str, str]:
+    """Return a dict of phase_key → type-appropriate label for all phases."""
+    return {p: get_phase_label(p, project_type) for p in ALL_PHASES}
+
+
 # ── Run state ────────────────────────────────────────────────────────────────
 
 @dataclass
@@ -229,6 +386,7 @@ class RunState:
     project_path: str
     project_name: str
     started_at: str
+    project_type: str = "novel"         # novel | screenplay | tv
     status: str = "running"             # running | paused | complete | failed
     current_phase: str = "bible"
     current_unit_index: int = 0         # index into units[]
@@ -260,6 +418,7 @@ class RunState:
             project_path=d["project_path"],
             project_name=d.get("project_name", ""),
             started_at=d["started_at"],
+            project_type=d.get("project_type", "novel"),
             status=d.get("status", "running"),
             current_phase=d.get("current_phase", "bible"),
             current_unit_index=d.get("current_unit_index", 0),
@@ -318,10 +477,19 @@ def save_run_state(state: RunState) -> None:
 
 # ── Prompt loading ───────────────────────────────────────────────────────────
 
-def system_prompt_for(phase_key: str) -> str:
+def system_prompt_for(phase_key: str, project_type: str = "novel") -> str:
+    """Load the system prompt for a phase from the type-appropriate rule directory.
+
+    Falls back to the novel template if the type-specific rule file doesn't exist
+    (e.g. a novel-only rule that also applies to screenplays).
+    """
     spec = PHASE_SPECS[phase_key]
     if spec.rule_file:
-        candidate = os.path.join(_RULE_DIR, spec.rule_file)
+        config = get_type_config(project_type)
+        # Try type-specific rule first, then novel template as fallback.
+        candidate = os.path.join(config.rule_dir, spec.rule_file)
+        if not os.path.isfile(candidate) and project_type != "novel":
+            candidate = os.path.join(_TYPE_CONFIGS["novel"].rule_dir, spec.rule_file)
         if os.path.isfile(candidate):
             with open(candidate, "r", encoding="utf-8-sig") as f:
                 return f.read()
@@ -346,23 +514,16 @@ def _write_file(rel: str, project: str, content: str) -> str:
     return rel
 
 
-def _chapter_rel(chapter_number: int, project: Optional[str] = None) -> str:
-    """Relative path for a chapter file.
+def _chapter_rel(chapter_number: int, project: Optional[str] = None,
+                 project_type: str = "novel") -> str:
+    """Relative path for a unit file (chapter/scene/episode).
 
-    Chapters live in manuscript/ (the same directory the Storythread UI reads
-    via its chapter list endpoint). The manifest verifier matches chapters via
-    a glob ``{NNN}_*.md`` (note the underscore). When ``project`` is given and
-    a matching file already exists on disk, return it; otherwise default to
-    ``{NNN}_chapter.md``.
+    Uses the ProjectTypeConfig to determine the correct directory, extension,
+    and naming pattern for the project type. Chapters live in manuscript/,
+    scenes in script/scenes/, episodes in scripts/scenes/S01EXX/.
     """
-    import glob as _glob
-    default = os.path.join("manuscript", f"{chapter_number:03d}_chapter.md")
-    if not project:
-        return default
-    matches = sorted(_glob.glob(os.path.join(
-        project, "manuscript", f"{chapter_number:03d}_*.md"
-    )))
-    return os.path.relpath(matches[0], project) if matches else default
+    config = get_type_config(project_type)
+    return config.unit_rel(chapter_number, project or "")
 
 
 def _bible_context(project: str) -> str:
@@ -497,14 +658,14 @@ def _apply_user_override(phase: str, chapter: int | None, content: str,
 
     if phase == "writer" and chapter is not None:
         body = strip_artifacts(content).strip() + "\n"
-        rel = _write_file(_chapter_rel(chapter), project, body)
+        rel = _write_file(_chapter_rel(chapter, project_type=state.project_type), project, body)
         wc = count_words(os.path.join(project, rel))
         return {"artifact": rel, "chapter": chapter, "word_count": wc, "raw_preview": content[:400], "user_override": True}
 
     if phase == "critics" and chapter is not None:
         from . import critics as critics_mod
         from .lint_suite import hash_chapter
-        chapter_path = os.path.join(project, _chapter_rel(chapter, project))
+        chapter_path = os.path.join(project, _chapter_rel(chapter, project_type=state.project_type))
         chash = hash_chapter(chapter_path)
         results = []
         for ctype in (*critics_mod.CRITIC_TYPES, critics_mod.EDITORIAL_TYPE):
@@ -531,26 +692,42 @@ def _apply_user_override(phase: str, chapter: int | None, content: str,
 # Each returns a dict: {artifact, gate, meta...}
 
 async def _exec_bible(state: RunState, project: str, model_call: ModelCall) -> dict:
-    system = system_prompt_for("bible")
+    config = get_type_config(state.project_type)
+    system = system_prompt_for("bible", state.project_type)
     characters = profile_context.character_context(project, "architect")
     world = profile_context.world_context(project)
+    # Build type-aware bible instructions.
+    if state.project_type == "screenplay":
+        bible_instructions = (
+            "Produce the bible for a screenplay. Output files delimited by markers "
+            "of the form '---BIBLE-FILE: <relative path>---' followed by the file content. "
+            "At minimum produce bible/01_concept.md, bible/04_outline.md (scene-by-scene), "
+            f"and bible/07_format_rules.md (Fountain discipline). {config.bible_heading_hint}"
+        )
+    elif state.project_type == "tv":
+        bible_instructions = (
+            "Produce the bible for a TV series. Output files delimited by markers "
+            "of the form '---BIBLE-FILE: <relative path>---' followed by the file content. "
+            "At minimum produce bible/01_series_concept.md, bible/04_season_arc.md "
+            "(episode breakdown), and bible/06_format_rules.md (TV format discipline). "
+            f"{config.bible_heading_hint}"
+        )
+    else:
+        bible_instructions = (
+            "Produce the bible for a new novel. Output three files delimited by markers "
+            "of the form '---BIBLE-FILE: <relative path>---' followed by the file content. "
+            "At minimum produce bible/01_concept.md, bible/04_outline.md, and "
+            f"bible/07_format_rules.md. {config.bible_heading_hint}"
+        )
     user = _with_instructions(
-        "Produce the bible for a new novel. Output three files delimited by markers "
-        "of the form '---BIBLE-FILE: <relative path>---' followed by the file content. "
-        "At minimum produce bible/01_concept.md, bible/04_outline.md, and "
-        "bible/07_format_rules.md. The outline must use '## Chapter N' headings so the "
-        "chapter count can be detected."
+        f"{bible_instructions}"
         f"{chr(10)*2}{characters + chr(10)*2 if characters else ''}"
         f"{world + chr(10)*2 if world else ''}",
         state,
     )
     reply = await model_call(system, user)
     artifacts = _split_bible_reply(reply, project)
-    # Sync the outline to notes/outline.md so the Storythread OutlinePlanner
-    # sees it immediately (unified outline location).
     _sync_outline_to_ui(project)
-    # Generate skeleton character profiles from the concept so the ProfileBuilder
-    # has something to work with from the start.
     _generate_skeleton_profiles(project)
     return {"artifacts": artifacts, "raw_preview": reply[:400]}
 
@@ -737,15 +914,18 @@ async def _exec_editorial_lock(state: RunState, project: str, model_call: ModelC
     return {"artifact": rel, "manifest": manifest_built, "raw_preview": reply[:400]}
 
 
-def _locate_outline(project: str) -> Optional[str]:
-    """Find the best outline file. Prefers notes/outline.md (the unified
-    location that both the UI OutlinePlanner and the pipeline read), then
-    falls back to bible/04_outline.md for backward compatibility."""
-    for cand in (os.path.join(project, "notes", "outline.md"),
-                 os.path.join(project, "bible", "04_outline.md"),
-                 os.path.join(project, "bible", "04_season_arc.md")):
-        if os.path.isfile(cand):
-            return cand
+def _locate_outline(project: str, project_type: str = "novel") -> Optional[str]:
+    """Find the best outline file for the project type.
+
+    Uses the ProjectTypeConfig's outline_candidates (e.g. notes/outline.md,
+    bible/04_outline.md for novel; bible/04_season_arc.md for TV). Returns the
+    first candidate that exists on disk.
+    """
+    config = get_type_config(project_type)
+    for cand in config.outline_candidates:
+        full = os.path.join(project, cand)
+        if os.path.isfile(full):
+            return full
     return None
 
 
@@ -819,7 +999,7 @@ def _generate_skeleton_profiles(project: str) -> None:
             f.write(profile_md)
 
 
-def _generate_scene_summaries(project: str, chapter: int) -> None:
+def _generate_scene_summaries(project: str, chapter: int, project_type: str = "novel") -> None:
     """After the architect phase, create skeleton scene summaries from the
     chapter plan so the SceneSummaryView has something to work with.
 
@@ -832,7 +1012,7 @@ def _generate_scene_summaries(project: str, chapter: int) -> None:
         return
     import re
     # Find the chapter file stem for the summaries directory.
-    chapter_rel = _chapter_rel(chapter, project)
+    chapter_rel = _chapter_rel(chapter, project, project_type=project_type)
     stem = os.path.splitext(os.path.basename(chapter_rel))[0]
     scenes_dir = os.path.join(project, "summaries", "scenes", stem)
     os.makedirs(scenes_dir, exist_ok=True)
@@ -862,67 +1042,88 @@ def _generate_scene_summaries(project: str, chapter: int) -> None:
             f.write(summary_md)
 
 
-def _prior_chapter_tail(project: str, chapter_number: int) -> str:
+def _prior_chapter_tail(project: str, chapter_number: int, project_type: str = "novel") -> str:
     if chapter_number <= 1:
         return ""
     prev = chapter_number - 1
-    text = _read_file(_chapter_rel(prev, project), project)
+    text = _read_file(_chapter_rel(prev, project, project_type=project_type), project)
     if not text:
         return ""
     return text[-1200:]
 
 
 async def _exec_architect(state: RunState, project: str, model_call: ModelCall) -> dict:
+    config = get_type_config(state.project_type)
     chapter = state.units[state.current_unit_index]
-    system = system_prompt_for("architect")
+    system = system_prompt_for("architect", state.project_type)
     characters = profile_context.character_context(project, "architect")
     world = profile_context.world_context(project)
+    # Build type-aware architect instructions.
+    if state.project_type == "screenplay":
+        plan_instruction = f"Plan scene {chapter} now. Break the scene into beats, describe the visual/emotional arc, and note any dialogue or silence architecture."
+    elif state.project_type == "tv":
+        plan_instruction = f"Plan episode S01E{chapter:02d} now. Break into acts (cold open, act breaks, tag), describe A/B/C story threads, and note character arc progression."
+    else:
+        plan_instruction = f"Plan chapter {chapter} now."
     user = _with_instructions(
         f"--- BIBLE ---\n{_bible_context(project)}\n--- END ---\n\n"
         f"{characters + chr(10)*2 if characters else ''}"
         f"{world + chr(10)*2 if world else ''}"
-        f"--- PRIOR CHAPTER TAIL ---\n{_prior_chapter_tail(project, chapter)}\n--- END ---\n\n"
-        f"Plan chapter {chapter} now.",
+        f"--- PRIOR {config.unit_label.upper()} TAIL ---\n{_prior_chapter_tail(project, chapter, state.project_type)}\n--- END ---\n\n"
+        f"{plan_instruction}",
         state,
     )
     reply = await model_call(system, user)
     rel = _write_file(os.path.join("critic_outputs", f"chapter_{chapter}_plan.md"),
                       project, reply.strip() + "\n")
-    # Generate skeleton scene summaries from the plan so the SceneSummaryView
-    # has something to work with.
-    _generate_scene_summaries(project, chapter)
+    _generate_scene_summaries(project, chapter, state.project_type)
     return {"artifact": rel, "chapter": chapter, "raw_preview": reply[:400]}
 
 
 async def _exec_writer(state: RunState, project: str, model_call: ModelCall) -> dict:
+    config = get_type_config(state.project_type)
     chapter = state.units[state.current_unit_index]
-    system = system_prompt_for("writer")
+    system = system_prompt_for("writer", state.project_type)
     plan = _read_file(os.path.join("critic_outputs", f"chapter_{chapter}_plan.md"), project)
     characters = profile_context.character_context(project, "writer")
     world = profile_context.world_context(project)
-    # If re-running after a REVISE gate verdict, inject the critic feedback so
-    # the writer can address the specific findings.
     critic_feedback = _collect_critic_feedback(project, chapter)
     rewrite_note = ""
     if critic_feedback:
         rewrite_note = (
             f"\n\n{critic_feedback}\n\n"
-            f"This is a REWRITE of chapter {chapter}. Address every critic finding "
+            f"This is a REWRITE of {config.unit_label} {chapter}. Address every critic finding "
             f"listed above. Preserve what works; fix what was flagged. Do NOT start "
-            f"from scratch — revise the existing prose to resolve the issues.\n"
+            f"from scratch — revise the existing material to resolve the issues.\n"
         )
+    # Build type-aware writer instructions.
+    if state.project_type == "screenplay":
+        write_instruction = (
+            f"Write scene {chapter} in Fountain markup now. Follow the format rules "
+            f"in the bible (INT./EXT. slug lines, ALL CAPS character names, "
+            f"parentheticals only when functional, no camera directions, no "
+            f"emotional parentheticals)."
+        )
+    elif state.project_type == "tv":
+        write_instruction = (
+            f"Write episode S01E{chapter:02d} in Fountain markup now. Include "
+            f"cold open, act breaks, and tag as appropriate for the format. "
+            f"Follow the TV format rules in the bible."
+        )
+    else:
+        write_instruction = f"Write the full prose for chapter {chapter} now."
     user = _with_instructions(
         f"--- ARCHITECT PLAN ---\n{plan}\n--- END ---\n\n"
         f"{characters + chr(10)*2 if characters else ''}"
         f"{world + chr(10)*2 if world else ''}"
-        f"--- PRIOR CHAPTER TAIL ---\n{_prior_chapter_tail(project, chapter)}\n--- END ---\n\n"
-        f"Write the full prose for chapter {chapter} now."
+        f"--- PRIOR {config.unit_label.upper()} TAIL ---\n{_prior_chapter_tail(project, chapter, state.project_type)}\n--- END ---\n\n"
+        f"{write_instruction}"
         f"{rewrite_note}",
         state,
     )
     reply = await model_call(system, user)
     body = strip_artifacts(reply).strip() + "\n"
-    rel = _write_file(_chapter_rel(chapter), project, body)
+    rel = _write_file(_chapter_rel(chapter, project_type=state.project_type), project, body)
     from .word_count import count_words
     wc = count_words(os.path.join(project, rel))
     return {"artifact": rel, "chapter": chapter, "word_count": wc, "raw_preview": reply[:400]}
@@ -944,7 +1145,7 @@ async def _exec_critics(state: RunState, project: str, model_call: ModelCall) ->
     from . import critics as critics_mod
 
     chapter = state.units[state.current_unit_index]
-    chapter_path = os.path.join(project, _chapter_rel(chapter, project))
+    chapter_path = os.path.join(project, _chapter_rel(chapter, project, project_type=state.project_type))
     chash = hash_chapter(chapter_path)
     # Phase G: per-critic profile context. The voice critic checks dialogue
     # against DECLARED voice registers; the continuity critic gets continuity
@@ -960,7 +1161,7 @@ async def _exec_critics(state: RunState, project: str, model_call: ModelCall) ->
         system = critics_mod._SYSTEM_PROMPTS[ctype]
         # Build the chapter context the critic runner would have assembled.
         from .word_count import strip_artifacts as _sa
-        chapter_text = _sa(_read_file(_chapter_rel(chapter, project), project))
+        chapter_text = _sa(_read_file(_chapter_rel(chapter, project, project_type=state.project_type), project))
         ctx = per_critic_context.get(ctype, "")
         ctx_block = f"\n{ctx}\n" if ctx else ""
         user = (
@@ -1046,24 +1247,51 @@ async def _exec_verify_unit(state: RunState, project: str, model_call: ModelCall
 
 
 async def _exec_assemble(state: RunState, project: str, model_call: ModelCall) -> dict:
-    """Concatenate chapter files into manuscript/novel.md (title block + chapters)."""
-    parts = [f"# {state.project_name}\n"]
-    for ch in state.units:
-        text = _read_file(_chapter_rel(ch), project)
-        parts.append(f"\n---\n\n## Chapter {ch}\n\n{text.strip()}\n")
-    assembled = "\n".join(parts) + "\n"
-    rel = _write_file(os.path.join("manuscript", "novel.md"), project, assembled)
+    """Assemble unit files into a single manuscript/script.
+
+    Novel: concatenate chapters into manuscript/novel.md.
+    Screenplay: concatenate scenes into script/screenplay.fountain (Fountain assembly).
+    TV: concatenate episodes into scripts/Season_1.fountain.
+    """
+    config = get_type_config(state.project_type)
+    if state.project_type == "screenplay":
+        # Screenplay assembly: concatenate scene .fountain files with a title page.
+        parts = [f"Title: {state.project_name}\n\n"]
+        for sc in state.units:
+            text = _read_file(config.unit_rel(sc, project), project)
+            if text.strip():
+                parts.append(text.strip() + "\n\n")
+        assembled = "\n".join(parts)
+    elif state.project_type == "tv":
+        # TV assembly: concatenate episode .fountain files.
+        parts = [f"Title: {state.project_name} — Season 1\n\n"]
+        for ep in state.units:
+            text = _read_file(config.unit_rel(ep, project), project)
+            if text.strip():
+                parts.append(text.strip() + "\n\n")
+        assembled = "\n".join(parts)
+    else:
+        # Novel assembly: markdown chapters with title block.
+        parts = [f"# {state.project_name}\n"]
+        for ch in state.units:
+            text = _read_file(_chapter_rel(ch, project_type=state.project_type), project)
+            parts.append(f"\n---\n\n## Chapter {ch}\n\n{text.strip()}\n")
+        assembled = "\n".join(parts) + "\n"
+
+    rel = _write_file(config.assembled_path, project, assembled)
     from .word_count import count_words
     wc = count_words(os.path.join(project, rel))
     return {"artifact": rel, "word_count": wc}
 
 
 async def _exec_adversarial(state: RunState, project: str, model_call: ModelCall) -> dict:
-    system = system_prompt_for("adversarial")
-    manuscript = _read_file("manuscript/novel.md", project)
+    config = get_type_config(state.project_type)
+    system = system_prompt_for("adversarial", state.project_type)
+    manuscript = _read_file(config.assembled_path, project)
+    doc_label = "MANUSCRIPT" if state.project_type == "novel" else "SCREENPLAY" if state.project_type == "screenplay" else "SERIES"
     user = _with_instructions(
-        f"--- FULL MANUSCRIPT ---\n{manuscript}\n--- END ---\n\n"
-        "Read the full manuscript and produce the adversarial report with located "
+        f"--- FULL {doc_label} ---\n{manuscript}\n--- END ---\n\n"
+        f"Read the full {doc_label.lower()} and produce the adversarial report with located "
         "findings and a dimensional score out of 10.",
         state,
     )
@@ -1108,11 +1336,14 @@ def start_run(project: str, project_name: str = "", word_floor: int = 800,
     """
     project = os.path.abspath(project)
     name = project_name or os.path.basename(project.rstrip("/\\"))
+    ptype = _detect_project_type(project)
+    config = get_type_config(ptype)
     state = RunState(
         project_path=project,
         project_name=name,
         started_at=datetime.now().isoformat(),
-        word_floor=word_floor,
+        project_type=ptype,
+        word_floor=word_floor if word_floor != 800 else config.word_floor,
         instructions=instructions.strip(),
         current_phase="bible",
         current_unit_index=0,
@@ -1128,23 +1359,20 @@ def start_run(project: str, project_name: str = "", word_floor: int = 800,
             state.units = list(range(1, n + 1))
 
     # Revise mode: skip bible/voice/editorial_lock and start at writer.
-    # The existing bible, voice spec, and outline are preserved on disk.
-    # Existing critic feedback will be injected into the writer prompt by
-    # _exec_writer via _collect_critic_feedback.
     if rerun_mode == "revise":
-        has_bible = os.path.isfile(os.path.join(project, "bible", "04_outline.md"))
-        has_chapters = any(
-            os.path.isfile(os.path.join(project, "manuscript", f"{ch:03d}_*.md"))
+        has_bible = any(
+            os.path.isfile(os.path.join(project, c))
+            for c in config.outline_candidates
+        )
+        has_units = any(
+            os.path.isfile(os.path.join(project, config.unit_rel(ch, project)))
             for ch in state.units
         ) if state.units else False
         if has_bible and state.units:
             state.current_phase = "writer"
             state.current_unit_index = 0
-            # Clear prior unit results so the revision loop re-evaluates
-            # each chapter fresh (but keeps phase_results like bible/voice).
             state.unit_results = {}
             state.chapter_retries = {}
-        # If no bible/chapters exist, fall through to normal fresh start.
 
     save_run_state(state)
     return state

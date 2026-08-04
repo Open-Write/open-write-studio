@@ -32,6 +32,17 @@ A guided workspace for authoring structured project context.
 
 Character, Relationship, Location, Lore. Each type has its own section template (Overview, Personality Traits, History, Tone and Atmosphere, Rule or Concept, etc.) defined in code, not user-edited.
 
+### Character kinds
+
+Characters now support a `character_kind` field that controls the template used:
+
+| Kind | Template | Use case |
+|---|---|---|
+| **Main** | Full trait-block editor with all sections | Protagonist, antagonist, major supporting characters |
+| **Side** | Simplified single-field-per-section | Background characters, walk-ons, named extras |
+
+Side characters drop per-section AI summaries and use a streamlined Quick Build flow for fast creation.
+
 ### Trait blocks
 
 Profile sections are made of trait blocks. A trait block is a single trait or a small group of related traits with a description and an importance level.
@@ -112,7 +123,25 @@ Subcategory checkboxes per category persist in `localStorage`, so the writer's p
 
 ## Writing Companion
 
-The right-side chat panel beside the editor. General-chat mode only — open conversational AI help (brainstorming, voice work, ad-hoc questions). Structured passes are handled by Smart Advisor, not chat.
+The right-side chat panel beside the editor. Three modes of interaction:
+
+- **General chat** — open conversational AI help (brainstorming, voice work, ad-hoc questions)
+- **Draft mode** — generates story prose from attached profile materials (800–1200 words, voice-anchored)
+- **Enhance mode** — rewrites a highlighted passage with level-governed expansion (Restate / Default / Expanded)
+
+Structured passes are handled by Smart Advisor, not chat.
+
+### Scene break suggestions
+
+A toolbar action that reads the current chapter and proposes where to place `---` scene breaks. Each suggestion is anchored to a verbatim quote with severity (strong / moderate / subtle) and pacing analysis. Review-only — the writer inserts breaks by hand.
+
+### Reasoning toggle
+
+A toggle in the Writing Companion that surfaces the model's reasoning trace alongside the answer. Hidden when the active model does not support reasoning (driven by OpenRouter's `supported_parameters`).
+
+### Canon / Reference toggle
+
+When profile chips are attached, a toggle lets the writer declare whether the AI should treat attached profiles as **canon** (enforce strictly) or **reference** (the writer's direction wins).
 
 ### Context chips
 
@@ -158,6 +187,23 @@ Per-scene files at `summaries/scenes/<chapter-stem>/scene-NN.md`. Two ways to cr
 
 The sidebar shows scene summaries as expandable grandchildren under each chapter.
 
+### Scene beats
+
+Each scene summary supports a `## Beats` checklist — a list of plot beats the writer wants to hit in the scene. Beats render as checkboxes in the sidebar under each scene. The writer can add, reorder, and check off beats. Beats are preserved across AI summary regeneration — the AI never touches the beats section when regenerating a scene summary.
+
+## Book Details
+
+Project-level narrative parameters stored in `project.json` and automatically injected into every AI system prompt:
+
+- **Theme** — the story's central theme or question
+- **Setting** — time period, world, location
+- **Point of View** — first person, third limited, omniscient, etc.
+- **Tense** — past, present
+- **Target Audience** — YA, adult, etc.
+- **Target Word Count** — stored in outline frontmatter, drives the progress gauge
+
+These fields ensure the AI always knows the project's narrative context without the writer having to repeat it in every conversation.
+
 ## Export
 
 Two export modes, both run from `POST /api/export/full-manuscript` and `POST /api/export/snapshot`:
@@ -171,8 +217,10 @@ A modal accessible from the sidebar. Sections:
 
 - **API key** — OpenRouter key with masking and a Test Connection button
 - **Default model** — model picker populated from OpenRouter's catalog with a cost-tier slider
+- **Multi-provider support** — 22+ providers (OpenRouter, OpenAI, Anthropic, Google, Mistral, Groq, xAI, Together, Fireworks, DeepInfra, Perplexity, DeepSeek, GLM, Qwen, Moonshot, MiniMax, Baichuan, StepFun, SiliconFlow, MiMo, LM Studio, Ollama) with per-provider API keys, base URLs, and curated model lists
 - **Content mode** — project-level default (`general`, `mature`, `explicit`) overridable per request
 - **Model Routing** — allowlist, blocklist, and per-model content-mode declarations enforced at request time
+- **Prompt caching** — toggle for Anthropic-style cache_control headers on repeated requests
 - **Theme** — light / dark
 - **Debug options**
 
@@ -187,13 +235,11 @@ Routing enforces two filters today:
 
 If no eligible model exists for a request, the app shows a clear error rather than silently degrading.
 
-## Em dash enforcement
+## Em dash policy
 
-Three layers, all required:
+Open-Write uses an **advisory** em dash policy. Em dashes and en dashes are a legitimate prose choice and are NOT banned. Density is governed downstream by the deterministic `em_dash` lint (advisory, flags > 2.0 dashes/page) and by the naturalism critic, which hunts em-dash overuse, not presence.
 
-1. **Prompt layer** — every AI system prompt explicitly bans em dashes
-2. **Sanitizer layer** — `backend/app/ai/sanitizer.py` rewrites any em or en dashes in the response before the frontend sees it
-3. **Style guide layer** — the project's `notes/style-guide.md` records the rule for the writer's reference
+The sanitizer (`backend/app/ai/sanitizer.py`) normalizes whitespace only and does NOT strip em/en dashes. This preserves the writer's punctuation choices and ensures critic reports match the source text.
 
 ## Auto-update
 
@@ -214,10 +260,22 @@ An autonomous, resumable production pipeline that runs the full Open-Write metho
 ### Pipeline phases
 
 ```
-Bible → Voice → Editorial Lock → (per chapter: Architect → Writer → Critics ×5 → Editorial → Verify) → Assemble → Adversarial Read → Finalize
+Bible → Voice → Editorial Lock → (per unit: Architect → Writer → Critics ×5 → Editorial → Verify) → Assemble → Adversarial Read → Finalize
 ```
 
 Each phase produces a gate-valid artifact. The pipeline never auto-advances past a FAIL — the writer approves each step.
+
+### Multi-format support
+
+The pipeline adapts to the project's `story_type`:
+
+| Format | Unit | Output | Assembly | Rule source |
+|--------|------|--------|----------|-------------|
+| Novel | Chapter | Markdown prose (`.md`) | `manuscript/novel.md` | `novel_template/.kilo/` |
+| Screenplay | Scene | Fountain (`.fountain`) | `script/screenplay.fountain` | `screenplay_template/.kilo/` |
+| TV | Episode | Fountain (`.fountain`) | `scripts/Season_1.fountain` | `tv_template/.kilo/` |
+
+The pipeline labels adapt automatically (e.g. "Screenwriter" instead of "Prose writer", "Scene Critics" instead of chapter critics). The manifest builder detects scene/episode headings in addition to chapter headings. Project creation creates type-appropriate folder structures.
 
 ### Pipeline screen (3 tabs)
 

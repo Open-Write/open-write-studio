@@ -21,6 +21,7 @@ import re
 from fastapi import APIRouter, HTTPException
 from app.recent_projects import load_recent, track_project, remove_project
 from app.outline_templates import render_outline, OutlineMetadata
+from app.outline_frontmatter import parse_outline_frontmatter, set_target_word_count
 from app.settings_store import get_vault_root
 from pydantic import BaseModel
 
@@ -29,7 +30,7 @@ from pydantic import BaseModel
 # the Pydantic request validation lives next to the endpoints that use it.
 # When we add Save the Cat, Hero's Journey, etc., update both this tuple and
 # the TEMPLATES dict in outline_templates.py.
-VALID_OUTLINE_TEMPLATES = ("novel", "novella", "novelette", "short_story", "serial_fiction")
+VALID_OUTLINE_TEMPLATES = ("novel", "novella", "novelette", "short_story", "serial_fiction", "screenplay", "tv")
 
 
 # Valid story_type values. The story type is the writer-facing label for
@@ -50,8 +51,8 @@ STORY_TYPE_DEFAULT_TEMPLATE: dict[str, str] = {
     "novelette":      "novelette",
     "short_story":    "short_story",
     "serial_fiction": "serial_fiction",
-    "screenplay":     "novel",
-    "tv_pilot":       "novel",
+    "screenplay":     "screenplay",
+    "tv_pilot":       "tv",
 }
 
 
@@ -75,6 +76,18 @@ PROJECT_FOLDERS = [
     "profiles/scenes",
     "exports",
     ".open-write",      # Hidden folder for app.db, cache, logs
+]
+
+# Additional folders for screenplay projects.
+SCREENPLAY_FOLDERS = [
+    "script/scenes",
+    "state",
+]
+
+# Additional folders for TV projects.
+TV_FOLDERS = [
+    "scripts/scenes",
+    "state",
 ]
 
 # Default starter files created in a new project.
@@ -344,7 +357,14 @@ async def create_project(request: CreateProjectRequest):
     # -- Create the folder structure --
     # os.makedirs creates nested folders in one call.
     # exist_ok=True means "don't throw an error if the folder already exists."
-    for subfolder in PROJECT_FOLDERS:
+    all_folders = PROJECT_FOLDERS[:]
+    if request.story_type == "screenplay":
+        all_folders.extend(SCREENPLAY_FOLDERS)
+    elif request.story_type == "tv_pilot":
+        all_folders.extend(TV_FOLDERS)
+    else:
+        all_folders.append("state")
+    for subfolder in all_folders:
         os.makedirs(os.path.join(folder, subfolder), exist_ok=True)
 
     # -- Write starter files (chapter + style guide) --
@@ -622,6 +642,18 @@ class UpdateProjectSettingsRequest(BaseModel):
     content_mode_default: str | None = None
     cost_tier:            str | None = None
     default_model:        str | None = None
+    # Book Details fields (sidebar panel). Stored flat in project.json.
+    # target_audience deliberately reuses the same key series.json uses so
+    # the book-over-series merge in _build_story_context works unchanged.
+    theme:                str | None = None
+    setting:              str | None = None
+    point_of_view:        str | None = None
+    tense:                str | None = None
+    target_audience:      str | None = None
+    # Word Count target is NOT stored in project.json -- the outline
+    # frontmatter is the single source of truth (the Progress gauge reads
+    # it from there). When provided, we patch notes/outline.md instead.
+    target_word_count:    int | None = None
 
 
 @router.get("/recent", response_model=list[RecentProjectItem])
@@ -638,11 +670,33 @@ async def remove_recent_project(project_id: str):
     return {"status": "ok"}
 
 
+def _read_outline_target(root_path: str) -> int | None:
+    """
+    Read target_word_count from notes/outline.md frontmatter, or None.
+
+    The Book Details panel shows the project word target alongside the
+    project.json fields, but the target actually lives in the outline (the
+    Progress gauge's source of truth). This helper lets GET /settings serve
+    everything from one request.
+    """
+    outline_path = os.path.join(root_path, "notes", "outline.md")
+    try:
+        with open(outline_path, "r", encoding="utf-8") as f:
+            frontmatter = parse_outline_frontmatter(f.read())
+    except OSError:
+        return None
+    value = frontmatter.get("target_word_count")
+    return value if isinstance(value, int) else None
+
+
 @router.get("/settings")
 async def get_project_settings(root_path: str):
     """Read and return the full project.json for a given project."""
     data = _read_project_json(root_path)
     data["root_path"] = root_path
+    # Computed field: the word target from the outline frontmatter, so the
+    # Book Details form has a single read surface (see _read_outline_target).
+    data["target_word_count"] = _read_outline_target(root_path)
     return data
 
 
@@ -1031,6 +1085,17 @@ async def update_project_settings(request: UpdateProjectSettingsRequest):
         data["cost_tier"] = request.cost_tier
     if request.default_model is not None:
         data["default_model"] = request.default_model
+    # Book Details fields (all optional strings, same partial-update rule)
+    if request.theme is not None:
+        data["theme"] = request.theme
+    if request.setting is not None:
+        data["setting"] = request.setting
+    if request.point_of_view is not None:
+        data["point_of_view"] = request.point_of_view
+    if request.tense is not None:
+        data["tense"] = request.tense
+    if request.target_audience is not None:
+        data["target_audience"] = request.target_audience
 
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
 
@@ -1038,5 +1103,14 @@ async def update_project_settings(request: UpdateProjectSettingsRequest):
     with open(project_file, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
+    # Word Count target goes to the outline frontmatter, not project.json
+    # (single source of truth for the Progress gauge). Soft failure: if
+    # outline.md is missing the helper logs a warning and we carry on.
+    if request.target_word_count is not None:
+        set_target_word_count(root_path, request.target_word_count)
+
     data["root_path"] = root_path
+    # Echo the effective target back so the Book Details form can show it
+    # without a second request.
+    data["target_word_count"] = _read_outline_target(root_path)
     return data

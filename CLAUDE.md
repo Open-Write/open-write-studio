@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Status
 
-**Current phase: Phase I (Pipeline UI Integration) -- complete. Screenplay support next.**
+**Current phase: Phase I (Pipeline UI Integration) -- complete. Storythread sync complete. Screenplay support next.**
 
 Phases 0-4, 5A-5E, 6, and I are complete and merged into `main`. Phase 5 was redesigned into an AI Respec with 5 sub-phases (5A-5E). Phase 6 delivered full-manuscript export. Phase I delivered full integration between the Open-Write autonomous pipeline and the Storythread UI: Output Library, Pipeline Companion chat, auto-run, user input overrides, per-stage model routing, post-critics revision loop, rerun dialog, outline unification, skeleton profile generation, scene summary generation, and a CLI debugging tool.
 
@@ -194,10 +194,37 @@ Two automated test suites plus a manual checklist. All three are wired into `/pr
   - `test_pipeline_outputs.py` -- output catalog, reader, traversal, control, chat-brief (27 assertions)
   - `test_orchestrator.py` -- pipeline orchestrator (7 tests)
   - `test_profile_context.py` -- profile loading, importance routing (7 tests)
-  - `test_providers.py` -- multi-provider routing
+  - `test_providers.py` -- multi-provider routing (8 tests)
   - `test_harness.py` -- harness layer tests
+  - `test_scene_beats.py` -- scene beats CRUD (9 tests)
+  - `test_names_store.py` -- name generator SQLite store (14 tests)
+  - `test_names_routes.py` -- `/api/names` endpoints
+  - `test_character_kinds.py` -- character kind (main/side) (9 tests)
+  - `test_story_context_fields.py` -- Book Details fields in story context (6 tests)
+  - `test_editor_chat_prompts.py` -- editor chat system prompt building (11 tests)
+  - `test_structure_manifest.py` -- acts/order manifest
+  - `test_rename_chapter_cascade.py` -- chapter rename cascade
+  - `test_project_settings_fields.py` -- project settings fields
+  - `test_profile_chat_prompts.py` -- profile chat prompt assembly
+  - `test_enhance_mode.py` -- enhance mode
+  - `test_scene_breaks.py` -- scene break suggestions
+  - `test_quick_overview.py` -- quick overview generation
+  - `test_editor_chat_materials_flow.py` -- materials/context flow
+  - `test_settings_store.py` -- settings store
+  - `test_settings_routes.py` -- settings API routes
+  - `test_sanitizer_routing.py` -- sanitizer routing
 - `app/src/**/*.test.{ts,tsx}` -- vitest + `@testing-library/react`, runs in jsdom. Current files:
   - `src/components/progress/ProjectCompletionGauge.test.tsx` -- compact bar, slide-over, serial mode, onToggle callback (7 tests)
+  - `src/components/profiles/NameGeneratorPanel.test.tsx` -- name generator panel
+  - `src/components/settings/ProviderPanel.test.tsx` -- provider panel
+  - `src/components/sidebar/ActGroup.test.tsx` -- act group sidebar
+  - `src/data/characterSpines.test.ts` -- character archetypes
+  - `src/data/traitPools.test.ts` -- character trait pools
+  - `src/data/names/fantasyNames.test.ts` -- fantasy name generation
+  - `src/hooks/useProjectUiState.test.ts` -- per-book UI state
+  - `src/utils/buildEditorChatPayload.test.ts` -- chat payload builder
+  - `src/utils/modelFiltering.test.ts` -- model filtering logic
+  - `src/utils/spellcheck.test.ts` -- spellcheck
 - `tests/manual-smoke.md` -- human walks through this before cutting a release. Covers the Tauri-shell flows (file dialogs, the updater, native menus, sidecar lifecycle) that automated tests can't reach today.
 
 ### Test commands

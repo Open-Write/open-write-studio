@@ -83,10 +83,13 @@ def resolve(model_id: str, providers: list[dict] | None = None) -> ResolvedProvi
     Resolve a (possibly qualified) model id to a provider + bare model name.
 
     Resolution order:
-      1. If the id starts with a known provider id followed by '/', that
-         provider is used and the remainder is the model name.
-      2. Otherwise the whole id is treated as an OpenRouter model name
-         (backward compatibility for legacy unqualified ids).
+      1. If the id starts with a known provider id followed by '/', AND that
+         provider has an api_key configured, use it directly.
+      2. If the id starts with a known provider id but that provider has NO
+         api_key, treat the whole id as an OpenRouter model (backward
+         compatibility: users with only an OpenRouter key can still reach
+         e.g. "openai/gpt-4o-mini" through OpenRouter).
+      3. Otherwise the whole id is treated as an OpenRouter model name.
 
     ``providers`` is normally loaded from settings; tests may pass an explicit
     list. Raises ValueError if no provider can be chosen.
@@ -99,8 +102,13 @@ def resolve(model_id: str, providers: list[dict] | None = None) -> ResolvedProvi
     if "/" in model_id:
         head, rest = model_id.split("/", 1)
         if head in index:
-            provider = index[head]
-            model_name = rest
+            candidate = index[head]
+            # Only use this provider directly if it has an API key configured.
+            # If not, fall through to OpenRouter so users with only an
+            # OpenRouter key can still reach models like "openai/gpt-4o-mini".
+            if candidate.get("api_key"):
+                provider = candidate
+                model_name = rest
 
     if provider is None:
         provider = index.get("openrouter")

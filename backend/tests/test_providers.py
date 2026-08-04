@@ -56,9 +56,24 @@ def test_explicit_openrouter_prefix():
 
 
 def test_is_configured_false_when_missing_key():
-    no_key = [dict(_PROVIDERS[1], api_key="")]
-    r = providers.resolve("glm/glm-4.6", providers=no_key)
-    assert r.is_configured is False
+    # When a provider has no key, resolve() falls through to OpenRouter.
+    # With OpenRouter present, glm/glm-4.6 routes through OpenRouter.
+    no_glm_key = [
+        {"id": "openrouter", "label": "OpenRouter", "base_url": "https://openrouter.ai/api/v1",
+         "api_key": "sk-or-AAAA", "models": []},
+        dict(_PROVIDERS[1], api_key=""),
+    ]
+    r = providers.resolve("glm/glm-4.6", providers=no_glm_key)
+    assert r.provider_id == "openrouter"
+    assert r.model_name == "glm/glm-4.6"
+
+    # Without OpenRouter present at all, it should raise.
+    no_key_no_or = [dict(_PROVIDERS[1], api_key="")]
+    try:
+        providers.resolve("glm/glm-4.6", providers=no_key_no_or)
+        assert False, "Expected ValueError"
+    except ValueError:
+        pass
 
 
 def test_normalize_merges_seeds_without_wiping_keys():

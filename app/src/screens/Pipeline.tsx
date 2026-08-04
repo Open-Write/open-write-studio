@@ -27,7 +27,8 @@ import { PIPELINE_API_BASE } from "../utils/pipelineApi";
 
 // Mirror of orchestrator.ALL_PHASES, in execution order. Kept here so the UI
 // can render the full roadmap (with done/current/pending states) even before
-// the backend reports them.
+// the backend reports them. Labels are overridden at runtime by
+// runState.all_phase_labels when the project type is screenplay or TV.
 const PHASE_ROADMAP: { key: string; label: string; scope: "project" | "per_unit" }[] = [
   { key: "bible",         label: "Bible (concept / outline / format)", scope: "project" },
   { key: "voice",         label: "Voice selection",                    scope: "project" },
@@ -47,14 +48,17 @@ const UNIT_PHASE_KEYS = new Set(["architect", "writer", "critics", "editorial", 
 interface RunStateResponse {
   active: boolean;
   status?: string;
+  project_type?: string;
   current_phase?: string;
   current_phase_label?: string;
   current_unit_index?: number;
   units?: number[];
+  unit_label?: string;
   instructions?: string;
   last_error?: string | null;
   phase_results?: Record<string, unknown>;
   unit_results?: Record<string, Record<string, unknown>>;
+  all_phase_labels?: Record<string, string>;
 }
 
 interface AdvanceResponse {
@@ -410,11 +414,11 @@ export function Pipeline({ project, onBack }: PipelineProps) {
                           <span className="block h-4 w-4 rounded-full border border-border" />
                         )}
                       </span>
-                      <span className="leading-tight">
-                        {phase.label}
+                       <span className="leading-tight">
+                        {runState?.all_phase_labels?.[phase.key] ?? phase.label}
                         {isUnit && runState.units && (
                           <span className="ml-1 text-xs text-text-muted">
-                            (per chapter)
+                            (per {runState.unit_label ?? "chapter"})
                           </span>
                         )}
                       </span>
@@ -475,7 +479,7 @@ export function Pipeline({ project, onBack }: PipelineProps) {
                 </div>
                 {!runComplete && runState.units && UNIT_PHASE_KEYS.has(currentPhase ?? "") && (
                   <div className="text-sm text-text-muted">
-                    Chapter {runState.units[currentUnitIndexClamped(runState)]}
+                    {(runState.unit_label ?? "Chapter").charAt(0).toUpperCase() + (runState.unit_label ?? "chapter").slice(1)} {runState.units[currentUnitIndexClamped(runState)]}
                   </div>
                 )}
               </div>
@@ -551,7 +555,7 @@ export function Pipeline({ project, onBack }: PipelineProps) {
                         <span className="text-xs font-medium text-text-primary">
                           Override: {runState?.current_phase_label ?? currentPhase}
                           {runState?.units && UNIT_PHASE_KEYS.has(currentPhase ?? "") &&
-                            ` — Chapter ${runState.units[currentUnitIndexClamped(runState)]}`}
+                            ` — ${(runState.unit_label ?? "Chapter").charAt(0).toUpperCase() + (runState.unit_label ?? "chapter").slice(1)} ${runState.units[currentUnitIndexClamped(runState)]}`}
                         </span>
                         <button onClick={() => setOverrideOpen(false)} className="text-text-muted hover:text-text-primary">
                           <XCircle className="h-4 w-4" />

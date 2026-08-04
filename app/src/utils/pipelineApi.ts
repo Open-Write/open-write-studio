@@ -47,12 +47,15 @@ export interface ArtifactContent {
 export interface RunStateResponse {
   active: boolean;
   status?: string;
+  project_type?: string;
   current_phase?: string;
   current_phase_label?: string;
   current_unit_index?: number;
   units?: number[];
+  unit_label?: string;
   instructions?: string;
   last_error?: string | null;
+  all_phase_labels?: Record<string, string>;
 }
 
 // ── Chat types (mirrors backend PipelineChatResponse) ────────────────────────

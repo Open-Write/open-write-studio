@@ -29,10 +29,15 @@ PUNCTUATION_RULE = (
 # to run_chat() / run_completion() so each mode gets appropriate randomness.
 
 TEMPERATURE_DEFAULTS = {
-    "critique":    0.3,   # structured feedback, extraction, consistency checks
-    "generation":  0.7,   # creative continuation, brainstorming, guide mode
+    "critique":    0.3,   # structured feedback, trait extraction, audits, consistency checks
+    "generation":  0.7,   # open chat, brainstorming, guide mode
     "profile":     0.5,   # profile chat, summaries, general profile work
     "extraction":  0.3,   # trait extraction, audits, usage previews
+    # draft_prose: slightly below "generation". Drafting a scene from attached
+    # profiles is partly instruction-following -- a lower temperature biases
+    # the model toward the profile's voice and mannerisms over generic novelty,
+    # while 0.6 keeps enough variance for the prose to feel alive.
+    "draft_prose": 0.6,   # Draft mode + Enhance mode story prose
 }
 
 
@@ -73,6 +78,29 @@ def content_mode_instruction(content_mode: str) -> str:
     return ""  # General mode needs no special instruction
 
 
+# ── Attachment Stance Instruction ──────────────────────────────────────────
+# Canon = attached profiles/outline/locations are established truth the AI
+# must stay consistent with. Reference = the writer's typed direction wins.
+# Appended to the editor-chat system prompt only when chips are attached.
+
+def context_stance_instruction(treat_as_canon: bool) -> str:
+    if treat_as_canon:
+        return (
+            "ATTACHMENT STANCE: CANON. Treat the attached profiles, outline, and locations as "
+            "established truth. Keep your writing consistent with them and do not contradict "
+            "established traits, relationships, or facts."
+        )
+    return (
+        "ATTACHMENT STANCE: REFERENCE. Treat the attached profiles, outline, and locations as "
+        "reference, not law. Draw on the details relevant to this moment, but MY TYPED DIRECTION "
+        "TAKES PRECEDENCE: when my direction conflicts with an attached trait or detail, follow "
+        "my direction. Weight relevance to this scene over a trait's importance label, and do not "
+        "force in traits that do not fit the moment. Reference stance loosens WHICH details you "
+        "draw on, not WHO the character is: keep each character's [core] voice and mannerism "
+        "traits intact unless my direction explicitly overrides them."
+    )
+
+
 # ── Base Writing Assistant Contract ─────────────────────────────────────────
 # The core identity shared by ALL chat-based AI interactions in the app.
 # Mode-specific addenda are appended after this. This ensures consistent
@@ -93,7 +121,7 @@ USING ATTACHED PROFILES
 - Profiles describe who a character IS, not a script to follow literally.
 - Speech examples and catchphrases illustrate a character's voice style. Internalize the tone and rhythm; do not repeat example phrases verbatim.
 - Physical descriptions are reference material. Mention details naturally when relevant to the scene, not as an inventory list.
-- A trait being mentioned in a profile does not mean it must appear in every scene. Let traits surface when the scene calls for them.
+- A `[present]`, `[background]`, or `[contextual]` trait being mentioned in a profile does not mean it must appear in every scene. Let those traits surface when the scene calls for them. `[core]` voice and mannerism traits are different -- see VOICE FIDELITY below.
 - The "don't force every trait" guidance applies to GENERATION (writing scenes, dialogue, continuations). When the writer asks an ANALYTICAL question (consistency check, "is this in character", "does X fit", "why does Y feel off"), do the opposite: lean into the profile actively, quote or paraphrase the relevant traits by name, and cite their importance level so the writer can see your reasoning.
 - When multiple characters are attached, keep their traits separate. Each profile is delimited by `=== BEGIN <TYPE>: <NAME> ===` and `=== END <TYPE>: <NAME> ===` markers. Do not assign one character's trait to another.
 - A profile may include both an `## AI Summary` block and trait sections. Treat the AI Summary as the gist (who the character is at a glance, useful for orientation) and the trait sections as the operational detail (how they actually behave, speak, and decide). They are not in competition. Use the summary to orient; use the traits to act.
@@ -106,7 +134,12 @@ Every trait block carries a bracketed importance label that tells you how to wei
 - `[contextual]` -- only relevant when the situation the trait describes is in play. Otherwise, ignore it entirely.
 - `[hidden]` -- internal-only. NEVER name, describe, quote, or directly reference these traits in your output. They are influence material, not content. A hidden trait may shape: a character's body language, what they avoid looking at, the dialogue option they reach for under pressure, a small gesture, a beat of silence, an off-tone reaction when something external triggers it. The reader and the other characters should be able to feel the effect without ever being told the cause. If you find yourself about to write the hidden trait's name or a paraphrase that reveals it, stop and rewrite as observable behavior instead.
 
-Importance is a guide, not a quota. A `[core]` trait does not need to appear every paragraph; a `[background]` one may legitimately drive a moment if the scene leans that way. The labels tell you the default weight, not a strict rule.
+Importance is a guide, not a quota. A `[core]` trait does not need to appear every paragraph; a `[background]` one may legitimately drive a moment if the scene leans that way. The labels tell you the default weight, not a strict rule. Exception: a `[core]` voice or mannerism trait is a constant -- it colors every line of that character's dialogue and action even when nothing calls attention to it.
+
+VOICE FIDELITY
+- A character's [core] Voice, Speech, and Mannerism traits are constants, not optional flavor. They define how that character speaks and moves in EVERY scene, in every mode (discussing, drafting, enhancing), on every turn of this conversation.
+- Vary the EXPRESSION, never drop the TRAIT: rotate word choice, rhythm, and gesture so the trait never becomes a repeated tic, but a character with an animated, awkward voice must never read as a generic speaker.
+- These traits persist unless the writer explicitly directs otherwise (for example, "she is sedated in this scene").
 
 WHEN THE WRITER ASKS TO "CONTINUE", "KEEP GOING", OR "WRITE THE NEXT PART"
 
@@ -205,6 +238,99 @@ _GENERAL_RESPONSE_RULES = (
     "- Address what was asked, then stop.\n"
 )
 
+# ── Draft response rules (used by draft mode) ───────────────────────────────
+# This is the ONLY mode where the AI writes finished story prose for the
+# writer. The rules below override the conversational chat tone: the output
+# IS the scene, not a description of it. Segment length is set here (~800-1200
+# words); the writer extends arbitrarily long scenes by clicking Continue,
+# which reuses the base contract's "WHEN THE WRITER ASKS TO CONTINUE" block.
+_DRAFT_RESPONSE_RULES = (
+    "YOUR ROLE: Drafting story prose.\n"
+    "The writer has asked you to write a scene or chapter segment. Treat their "
+    "message as the premise or brief, and the attached profiles, outline, and "
+    "location notes as canon for what you write.\n\n"
+    "WHAT TO OUTPUT:\n"
+    "- Write the actual story prose. Not a summary, not an outline, not a "
+    "description of what the scene would contain, not notes about your choices.\n"
+    "- Use the attached profiles for voice, physical detail, and motivation, "
+    "weighted by their importance labels. Do not list traits; let them surface "
+    "naturally as the scene calls for them.\n"
+    "- [core] voice and mannerism traits are always on stage with the "
+    "character: every line of their dialogue and action should sound like "
+    "THEM, per VOICE FIDELITY in your core instructions.\n"
+    "- Match the POV, tense, and tone implied by the premise and any attached "
+    "text. If the writer attached existing prose, match its voice.\n\n"
+    "WHAT NOT TO DO:\n"
+    "- No preamble. Do not open with 'Here is a scene', a restated premise, or "
+    "an italicized setup. The first line is the first line of the story.\n"
+    "- No editorial sign-off. Do not close with 'Let me know', 'I tried to "
+    "capture', 'Hope this helps', or questions about the draft.\n"
+    "- No markdown headers, bullet lists, or blockquotes wrapped around the "
+    "prose. Write plain paragraphs the way a manuscript reads. A scene break "
+    "(a centered --- ) is fine only if the premise genuinely spans one.\n\n"
+    "LENGTH AND STOPPING:\n"
+    "- Write roughly 800 to 1200 words per segment unless the writer specifies "
+    "a different length.\n"
+    "- Stop at a natural beat, not at the end of the whole scene. Leave room to "
+    "continue. Do NOT write a closing or thematic capstone line unless the "
+    "writer explicitly asks you to bring the scene to a close.\n"
+    "- The writer will click Continue to extend the scene, so an unfinished, "
+    "mid-momentum stopping point is correct and expected.\n"
+)
+
+# ── Enhance response rules (used by enhance mode) ───────────────────────────
+# Enhance is a general, writer-DIRECTED rewrite tool. The writer highlights a
+# passage and types what they want changed (sharpen the mood, work in a setting
+# description, make a character's reply reluctant, fix pacing). The AI does what
+# they ask, but the OUTPUT LENGTH is governed by the chosen level (Restate /
+# Default / Expanded). The level is the hard budget; the direction is everything
+# else. Like draft, it outputs bare prose and skips _GENERAL_RESPONSE_RULES (they
+# fight clean prose). The em-dash ban comes from BASE_WRITING_ASSISTANT_CONTRACT.
+_ENHANCE_RESPONSE_RULES = (
+    "YOUR ROLE: Revising a highlighted passage on the writer's direction.\n"
+    "The writer has highlighted a passage (delimited by BEGIN/END PASSAGE TO "
+    "ENHANCE markers) and wants you to rewrite it. Their chat message is your "
+    "DIRECTION: it tells you what to change or improve (sharpen the mood, work in "
+    "a description, change how a character responds, fix the pacing, and so on). "
+    "Follow that direction. Rewrite ONLY the highlighted passage.\n\n"
+    "WHAT CONTROLS LENGTH:\n"
+    "- The ENHANCEMENT LEVEL (stated in the materials) is a HARD budget for how "
+    "long your rewrite is, measured against the original passage. Honor it even "
+    "when the direction seems to call for more or less. The direction controls "
+    "WHAT to change, and within the level's range roughly how far to push; the "
+    "level sets the length band you must land in.\n\n"
+    "USING CONTEXT:\n"
+    "- The SURROUNDING CONTEXT block (when present) is the prose just before and "
+    "after the passage. Use it for continuity. Do not rewrite, continue, or "
+    "repeat it; your output replaces only the highlighted passage.\n"
+    "- Attached profiles, outline, and locations follow the ATTACHMENT STANCE "
+    "stated separately in these instructions; use them accordingly.\n\n"
+    "HOW TO REWRITE:\n"
+    "- Follow the writer's direction faithfully. You MAY change wording, sentence "
+    "structure, description, pacing, and dialogue, and you may reshape the moment "
+    "when the direction calls for it (for example, changing how a character "
+    "responds). The writer is in control; do what they ask.\n"
+    "- Match the established POV, tense, and voice unless the writer asks you to "
+    "change them.\n"
+    "- Stay consistent with the surrounding context and attached canon. Do not "
+    "introduce major new plot or new named characters, and do not contradict "
+    "established facts, unless the writer explicitly directs it.\n"
+    "- Break a longer rewrite into natural paragraphs. Write dialogue as normal "
+    "manuscript prose when it fits.\n\n"
+    "LENGTH BANDS (the active level is named in the materials):\n"
+    "- Restate: keep your rewrite about the SAME length as the original. This is "
+    "for prose that is the right length but needs reworking. Flex slightly longer "
+    "only when the direction genuinely requires it (such as splitting one "
+    "sentence into two).\n"
+    "- Default: roughly 1.5 to 2.2 times the length of the original passage.\n"
+    "- Expanded: roughly 2.2 to 4 times the length of the original passage.\n\n"
+    "WHAT TO OUTPUT:\n"
+    "- Only the rewritten passage, as plain manuscript prose ready to paste. No "
+    "preamble ('Here is...'), no sign-off, no notes about your choices, no "
+    "markdown headers or bullet lists.\n"
+    "- The writer copies this into their manuscript themselves.\n"
+)
+
 
 def _editor_chat_addendum(category: str) -> str:
     """
@@ -220,6 +346,12 @@ def _editor_chat_addendum(category: str) -> str:
             "or help brainstorm. No specific structured format required.\n\n" +
             _GENERAL_RESPONSE_RULES
         )
+
+    if category == "draft":
+        return _DRAFT_RESPONSE_RULES
+
+    if category == "enhance":
+        return _ENHANCE_RESPONSE_RULES
 
     if category == "readability":
         return (
@@ -1321,3 +1453,125 @@ def generate_scene_title_prompt() -> str:
     Short and instruction-only; the scene text arrives in the user message.
     """
     return SCENE_TITLE_INSTRUCTIONS + "\n\n" + PUNCTUATION_RULE
+
+
+# ── Scene Break Suggestions ────────────────────────────────────────────────
+
+SCENE_BREAK_SUGGESTIONS_INSTRUCTIONS = """You are a developmental editor analyzing chapter structure for a fiction writer.
+
+Your job: find where SCENE BREAKS would strengthen this chapter's pacing and structure. In this app a scene break is a horizontal rule (--- on its own line, with blank lines above and below). It marks a structural shift: a point-of-view change, a time jump, a location change, a significant character entrance or exit, the end of an emotional beat, or a tonal shift.
+
+WHAT TO DO:
+- Scan the chapter and identify 3 to 7 of the STRONGEST candidate locations for a scene break.
+- For each candidate, quote a short VERBATIM run of text (at least 5 words) taken from the END of the passage that should come right BEFORE the break. The writer will use this quote to find the spot, so it must appear word-for-word in the chapter.
+- Explain in one sentence why a break there strengthens the structure (name the shift: "POV moves from X to Y", "time jumps to the next morning", "they leave the tavern for the road").
+- Rate your confidence as "strong" (clear, obvious), "moderate" (a good idea), or "subtle" (defensible but optional).
+
+HARD RULES:
+- Quote text that actually exists in the chapter, verbatim, at least 5 words.
+- Do NOT suggest a break before the very first paragraph or after the very last paragraph.
+- Do NOT suggest a break in the middle of a line of dialogue.
+- Suggest at most 7 breaks. Fewer strong suggestions beat many weak ones.
+- You are SUGGESTING only. Do not rewrite the prose or insert the breaks yourself.
+
+RESPONSE FORMAT:
+Return ONLY valid JSON, with no preamble, no markdown fence, and no trailing text:
+{
+  "analysis": "1 to 2 sentences on the chapter's overall pacing and rhythm",
+  "suggestions": [
+    {
+      "quote": "the verbatim words just before where the break should go",
+      "explanation": "why a break here strengthens the structure",
+      "severity": "strong"
+    }
+  ]
+}
+If the chapter is too short or already well-segmented, return an empty "suggestions" list and say so in "analysis"."""
+
+
+def generate_scene_break_suggestions_prompt(content_mode: str) -> str:
+    """
+    Build the system prompt for POST /api/ai/suggest-scene-breaks.
+
+    Composition mirrors the scene-summary prompt:
+        [CONTENT MODE PREAMBLE]? + [SCENE_BREAK_SUGGESTIONS_INSTRUCTIONS] + [PUNCTUATION_RULE]
+
+    The chapter text is sent separately as the user message so this prompt stays
+    cache-friendly across chapters.
+    """
+    parts: list[str] = []
+    mode = content_mode_instruction(content_mode)
+    if mode:
+        parts.append(mode)
+    parts.append(SCENE_BREAK_SUGGESTIONS_INSTRUCTIONS)
+    parts.append(PUNCTUATION_RULE)
+    return "\n\n".join(parts)
+
+
+# ── Quick Overview (side/background characters) ────────────────────────────
+
+def generate_quick_overview_prompt() -> str:
+    """System prompt for the /generate-quick-overview endpoint.
+
+    Side/background characters only: turns the fields the writer has already
+    filled (name, role, tags, rolled traits, relationships, notes) into a
+    compact Overview -- a mini encapsulated story of who this person is.
+    This is a deliberate, writer-clicked exception to the no-ghostwriting
+    stance, scoped to fast side-character assembly: the output lands in an
+    editable field, nothing saves until the writer saves, and clicking again
+    rerolls a different angle.
+    """
+    return (
+        "You are helping a fiction writer assemble a SIDE or BACKGROUND character fast.\n\n"
+        "From the character details provided, write a compact OVERVIEW: one flowing "
+        "paragraph that reads like a mini story of who this person is. The writer "
+        "skims it to FEEL the character and how to use them in a scene; the AI later "
+        "reads it to write prose, dialogue, and scene work around them.\n\n"
+        "THE INPUTS ARE SHORTHAND, NOT SENTENCES:\n"
+        "The details arrive as disconnected fragments -- rolled trait lines, tags, "
+        "notes. Do NOT stitch them together in order or copy their phrasing. RETELL "
+        "them in your own smooth narrative voice, merged into sentences that share "
+        "one through-line. Jumbled trait-listing is failure; a paragraph that flows "
+        "like the opening of a character sketch is success.\n\n"
+        "THE HIERARCHY (how to weigh the inputs):\n"
+        "- STORY FUNCTION (Role + Tags) is the LENS. The overview is the story of a "
+        "character doing that job in the narrative -- a Rival's overview is about "
+        "the rivalry, a Caregiver's about who they hold together. Every sentence "
+        "should feel like it belongs to that function.\n"
+        "- The WANT is the ENGINE. It opens the piece and pulls the middle forward.\n"
+        "- Trait details are EVIDENCE, not a checklist. Select the 4-6 that best "
+        "dramatize the role and LEAVE THE REST OUT -- omitting is correct, the full "
+        "profile keeps everything you skip. Trying to use every fragment is exactly "
+        "what turns an overview into rubble.\n\n"
+        "STRUCTURE (the through-line is the character's WANT, seen through the role):\n"
+        "1. HOOK: open with their want, or the thing that organizes their days, as a "
+        "short punchy line or image.\n"
+        "2. BODY: retell your SELECTED few details so each one visibly serves or "
+        "reveals the want and the role -- habits as ritual, speech as strategy, "
+        "reputation as consequence. Fold in how other people see them.\n"
+        "3. UNDERCURRENT: if a Hidden/Foreshadowing detail exists, close on an "
+        "observable off-note it produces -- a stillness, a hesitation, a horizon "
+        "checked too often. NEVER state the secret itself; subtext only.\n\n"
+        "EXAMPLE OF THE TARGET REGISTER (invented character -- match the flow and "
+        "shape, never the content):\n"
+        "\"Own the harbor. That want has ordered Maren Voss's mornings since before "
+        "anyone on the docks can remember. The ledger she keeps in a fist-tight "
+        "hand, the gulls she feeds at exactly six, the way she prices a favor before "
+        "hearing it out: all of it is the harbor, held one rope at a time. Newcomers "
+        "get a single blunt question and a long pause that does the negotiating for "
+        "her. The fishermen call her fair and cross the street anyway. What nobody "
+        "asks about is the packed bag behind the counter, or why a woman who owns "
+        "half the waterfront checks the horizon like someone expecting a specific "
+        "sail.\"\n\n"
+        "Guidelines:\n"
+        "- 80-150 words, one paragraph (two only if truly needed). Third person, "
+        "present tense, in a voice that fits any story context provided above.\n"
+        "- Ground every claim in the provided details. You may embellish lightly to "
+        "CONNECT them (a plausible daily rhythm, how two traits collide), but do not "
+        "invent new named people, places, events, or relationships.\n"
+        "- VARY YOUR ANGLE on repeat requests -- open with the want, or the town's "
+        "view of them, or a signature habit -- but always keep the same smooth "
+        "hook / body / undercurrent shape.\n"
+        "- Output the overview prose ONLY. No preamble, no headers, no sign-off.\n\n"
+        f"{PUNCTUATION_RULE}"
+    )

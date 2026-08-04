@@ -242,7 +242,15 @@ async def test_openrouter_connection():
     Calls the OpenRouter models endpoint and reports success or failure.
     The frontend calls this when the user clicks 'Test Connection' in Settings.
     """
-    api_key = load_settings().get("openrouter_api_key", "")
+    # Use get_providers() which handles legacy key migration from
+    # openrouter_api_key -> providers list. Reading directly from
+    # openrouter_api_key would miss keys saved through the providers UI.
+    providers = get_providers()
+    api_key = ""
+    for p in providers:
+        if p.get("id") == "openrouter" and p.get("api_key"):
+            api_key = p["api_key"]
+            break
 
     if not api_key:
         return {"ok": False, "error": "No API key saved. Enter your OpenRouter key in Settings first."}

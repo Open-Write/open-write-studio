@@ -13,7 +13,7 @@
 #
 # We patch the module-level SETTINGS_DIR / SETTINGS_FILE / SETTINGS_BACKUP /
 # SETTINGS_TMP constants to point at a per-test temp directory so each test
-# is isolated and the developer's real ~/.open-write is never touched.
+# is isolated and the developer's real ~/.storythread is never touched.
 
 import json
 
@@ -26,9 +26,9 @@ from app import settings_store
 def isolated_settings(tmp_path, monkeypatch):
     """
     Redirect settings_store's file paths into a tmp_path so each test gets
-    a fresh empty ~/.open-write sandbox. Yields the tmp dir for assertions.
+    a fresh empty ~/.storythread sandbox. Yields the tmp dir for assertions.
     """
-    sandbox = tmp_path / ".open-write"
+    sandbox = tmp_path / ".storythread"
     monkeypatch.setattr(settings_store, "SETTINGS_DIR",    sandbox)
     monkeypatch.setattr(settings_store, "SETTINGS_FILE",   sandbox / "settings.json")
     monkeypatch.setattr(settings_store, "SETTINGS_BACKUP", sandbox / "settings.json.bak")
@@ -41,6 +41,18 @@ def test_load_returns_defaults_when_no_file(isolated_settings):
     loaded = settings_store.load_settings()
     assert loaded["openrouter_api_key"] == ""
     assert loaded["default_model"] == settings_store.DEFAULT_SETTINGS["default_model"]
+    # Multi-provider system: providers list exists.
+    assert loaded["providers"] == []
+
+
+def test_providers_list_persist(isolated_settings):
+    """providers list survives a save/load round trip."""
+    settings = settings_store.load_settings()
+    settings["providers"] = [{"id": "openrouter", "api_key": "test-key"}]
+    settings_store.save_settings(settings)
+
+    loaded = settings_store.load_settings()
+    assert any(p["id"] == "openrouter" for p in loaded["providers"])
 
 
 def test_save_then_load_roundtrip(isolated_settings):

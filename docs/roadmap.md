@@ -215,7 +215,7 @@ Replace blocking AI calls with server-sent events so chat replies and Smart Advi
 
 ### Prompt caching toggle
 
-Wire OpenRouter's cache headers for static context (profile chips, lore, style guide) so repeated requests in a session do not re-bill the same tokens. Settings toggle, default on.
+~~Wire OpenRouter's cache headers for static context (profile chips, lore, style guide) so repeated requests in a session do not re-bill the same tokens. Settings toggle, default on.~~ **Shipped in Unreleased.**
 
 ---
 
@@ -237,7 +237,7 @@ Two new subcategories under the existing Context category. No new endpoint or UI
 
 ### Scene break insertion suggestions
 
-Optional Smart Advisor mode (or separate toolbar action) that proposes `---` scene-break locations within a chapter. Applied via the same accept / ignore popover flow as other Advisor issues.
+~~Optional Smart Advisor mode (or separate toolbar action) that proposes `---` scene-break locations within a chapter. Applied via the same accept / ignore popover flow as other Advisor issues.~~ **Shipped in Unreleased.** `POST /api/ai/suggest-scene-breaks` with quote-anchored suggestions and severity levels.
 
 ### Task-aware model auto-selection
 
@@ -287,7 +287,7 @@ Lower priority. May ship eventually, may never; no harm if they don't.
 
 ### Reasoning-mode toggle
 
-Per-request toggle that surfaces the model's reasoning trace alongside the answer for reasoning-capable models (DeepSeek-R1, o1-class, etc.). Hidden when the active model does not support it.
+~~Per-request toggle that surfaces the model's reasoning trace alongside the answer for reasoning-capable models (DeepSeek-R1, o1-class, etc.). Hidden when the active model does not support it.~~ **Shipped in Unreleased.**
 
 ### Settings: media-capability filter
 

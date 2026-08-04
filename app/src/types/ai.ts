@@ -78,6 +78,7 @@ export interface ModelInfo {
   output_modalities: string[];  // e.g. ["text"] or ["text","image"]
   is_free: boolean;             // true if :free suffix or zero cost
   is_moderated: boolean;        // true if model has content filters (refuses explicit)
+  supports_reasoning: boolean;  // true if model supports reasoning traces
 }
 
 // ── Assistants ────────────────────────────────────────────────────────────────
@@ -204,11 +205,14 @@ export interface ProfileChatPayload {
 // The three focus categories for the main editor's Writing Companion panel.
 // Each category sets the AI's area of expertise for the conversation.
 // null = no category selected (general chat mode)
-export type EditorChatCategory = "readability" | "structure" | "context" | null;
+export type EditorChatCategory = "readability" | "structure" | "context" | "chat" | "draft" | "enhance" | null;
+
+export type EnhanceLevel = "restate" | "default" | "expanded";
 
 export interface EditorChatMessage {
   role: "user" | "assistant";
   content: string;
+  hidden?: boolean;  // true for materials/context messages persisted in history
 }
 
 export interface EditorChatPayload {
@@ -220,6 +224,46 @@ export interface EditorChatPayload {
   model_id?:       string;
   content_mode?:   string;
   project_path?:   string;
+  // Enhance mode only: paragraphs around the selection (grounding, not rewritten).
+  surrounding_context?: string;
+  // Enhance mode only: how much to expand.
+  enhance_level?:  EnhanceLevel;
+  // Reasoning toggle: ask for the model's reasoning trace (reasoning-capable
+  // models only; the UI hides the toggle otherwise).
+  include_reasoning?: boolean;
+  // True while ANY chips are attached in the UI -- context_chips above only
+  // carries the NEW ones for this turn (established chips live in history).
+  // Keeps the backend's ATTACHMENT STANCE instruction active on every turn
+  // of the attachment's life, not just the turn it was added.
+  has_attached_context?: boolean;
+}
+
+
+// ── Scene Break Suggestions ──────────────────────────────────────────────────
+// Mirrors SuggestSceneBreaksRequest/Response in backend/app/routers/ai.py. The
+// AI reads a chapter and proposes where to place `---` scene breaks; each
+// suggestion is anchored to a verbatim quote the writer can find. Review-only:
+// the writer inserts the breaks by hand.
+export type SceneBreakSeverity = "strong" | "moderate" | "subtle";
+
+export interface SceneBreakSuggestion {
+  quote:       string;            // verbatim text just before the suggested break
+  explanation: string;            // why a break here helps
+  severity:    SceneBreakSeverity;
+}
+
+export interface SuggestSceneBreaksPayload {
+  chapter_path?: string;
+  project_path?: string;
+  chapter_text:  string;
+  model_id?:     string;
+  content_mode?: string;
+}
+
+export interface SuggestSceneBreaksResponse {
+  suggestions: SceneBreakSuggestion[];
+  analysis:    string;
+  model_used:  string;
 }
 
 
@@ -312,10 +356,16 @@ export interface ReviseSuggestionResponse {
 
 // Metadata returned by the list endpoint -- one entry per filled slot. The
 // sidebar uses this to render Scene N grandchildren under each chapter.
+export interface Beat {
+  text:  string;
+  done:  boolean;
+}
+
 export interface SceneSummaryInfo {
   index:    number;   // 1-based positional index
   title:    string;   // From the `# Heading` line of the scene file
   filename: string;   // e.g. "scene-01.md"
+  beats:    Beat[];
 }
 
 // Body returned when loading one scene summary. `exists` is false when the
@@ -325,6 +375,7 @@ export interface SceneSummaryResponse {
   title:   string;
   content: string;
   exists:  boolean;
+  beats:   Beat[];
 }
 
 // Payload for saving a scene summary. The backend prepends "# <title>" to

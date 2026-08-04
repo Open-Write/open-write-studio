@@ -4,6 +4,97 @@
 
 ---
 
+## v1.0.6 — Storythread Sync
+
+*Date: 2026-08-03*
+
+### Summary
+
+Ported safe updates from StorythreadStudio v1.0.5→v1.0.11 to Open-Write-Studio. This sync brings character creation tools, scene beats, Writing Companion enhancements (Draft/Enhance modes, reasoning toggle, canon/reference toggle), Book Details panel, chapter rename cascade, name generator, and multiple bug fixes — all without breaking Open-Write's multi-provider architecture, pipeline system, or advisory em-dash policy.
+
+### New Files (35)
+
+**Frontend — Sidebar Components:**
+- `components/sidebar/ActGroup.tsx` + test
+- `components/sidebar/ChapterNavRow.tsx`
+- `components/sidebar/NavItem.tsx`
+- `components/sidebar/NavSection.tsx`
+- `components/sidebar/RowMenu.tsx`
+
+**Frontend — Character Profiles:**
+- `components/profiles/NameGeneratorPanel.tsx` + test
+- `components/profiles/QuickBuildPanel.tsx`
+- `components/profiles/SpinePickers.tsx`
+
+**Frontend — Settings:**
+- `components/settings/providerMeta.ts`
+- `components/settings/ProviderPanel.tsx` + test
+
+**Frontend — Editor:**
+- `components/EditorMenu.tsx`
+
+**Frontend — Data:**
+- `data/characterSpines.ts` + test
+- `data/traitPools.ts` + test
+- `data/names/fantasyNames.ts` + test
+
+**Frontend — Types/Utils/Hooks:**
+- `types/structure.ts`
+- `utils/autoSizeTextarea.ts`
+- `utils/buildEditorChatPayload.ts` + test
+- `utils/modelFiltering.ts` + test
+- `hooks/useProjectUiState.ts` + test
+
+**Backend:**
+- `app/utils/structure_store.py` — Acts-based chapter ordering
+- `app/utils/names_store.py` — Character name generator DB
+- `app/routers/names.py` — `/api/names` endpoints
+- `app/routers/structure.py` — `/api/structure` endpoints
+- `app/data/names/*.json` — 4 name data files
+
+### Modified Files
+
+**Backend:**
+- `routers/documents.py` — Scene beats, chapter rename cascade, structure store integration
+- `routers/profiles.py` — `character_kind`, tolerant parsing
+- `routers/projects.py` — Book Details fields, target_word_count
+- `routers/ai.py` — Draft/Enhance modes, scene breaks, reasoning toggle, canon/reference, materials echo
+- `ai/prompts.py` — New prompt rules for all new features
+- `ai/openrouter.py` — `sanitize_mode`, `include_reasoning`, `supports_reasoning`
+- `outline_frontmatter.py` — `set_target_word_count()`
+- `progress_store.py` — `migrate_file_relpath()`
+- `main.py` — Registered names and structure routers
+
+**Frontend:**
+- `App.tsx` — Save-time title sync, 300s timeout
+- `types/ai.ts` — Beat, EnhanceLevel, SceneBreakSuggestion, supports_reasoning, new EditorChatPayload fields
+
+### Bug Fixes
+
+- **OpenRouter provider resolution** — Model IDs like `"openai/gpt-4o-mini"` no longer incorrectly resolve to the OpenAI provider; they correctly route through OpenRouter
+- **Writing Companion clear** — Now properly resets established chips, chapter flag, context chips, and input
+- **Sidebar title sync** — Chapter title updates immediately after saving if H1 was edited
+- **Chat timeout** — Increased from 180s to 300s for slow reasoning models
+- **Chapter numbering** — Uses max(prefix)+1 to avoid collisions after deletes
+- **Tolerant profile parsing** — No more 400 errors on malformed profiles
+
+### What Was NOT Changed (intentionally preserved)
+
+- Multi-provider architecture (22+ providers with `resolve()`)
+- Pipeline/harness system
+- `.open-write/` branding
+- Advisory em-dash policy
+- "Chapter One" naming
+- Screenplay/TV pilot story types
+
+### Tests
+
+- 246 backend tests pass (90 pre-existing + 156 new/adapted)
+- TypeScript compiles cleanly
+- 5 incompatible Storythread tests removed (provider system references)
+
+---
+
 ## v1.1.1 — MCP Hardening Release
 
 *Date: 2026-06-15*

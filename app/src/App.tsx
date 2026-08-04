@@ -845,6 +845,22 @@ function App() {
       // Refresh word count against the exact bytes that just hit disk.
       setWordCount(countWords(content));
 
+      // Keep the sidebar title in sync with the saved content.
+      if (activeView !== "notes" && chapter) {
+        const h1 = content.match(/^#\s+(.+)$/m);
+        const newTitle = h1?.[1].trim();
+        if (newTitle && newTitle !== chapter.title) {
+          setChapters(prev => prev.map(c =>
+            c.filename === chapter.filename ? { ...c, title: newTitle } : c
+          ));
+          setCurrentChapter(prev =>
+            prev && prev.filename === chapter.filename
+              ? { ...prev, title: newTitle }
+              : prev
+          );
+        }
+      }
+
     } catch (err) {
       setEditorError(err instanceof Error ? err.message : "Could not save.");
     }
@@ -1140,7 +1156,7 @@ function App() {
     chatManualCancelRef.current = false;
     setChatCanCancel(false);
     const cancelButtonTimer = setTimeout(() => setChatCanCancel(true), 20_000);
-    const hardTimeoutTimer  = setTimeout(() => controller.abort(), 180_000);
+    const hardTimeoutTimer  = setTimeout(() => controller.abort(), 300_000);
 
     try {
       const res = await fetch(`${API_BASE}/api/ai/editor-chat`, {

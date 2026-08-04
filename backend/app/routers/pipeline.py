@@ -493,14 +493,17 @@ async def get_run_state_route(project_path: str = Query(...)):
     return {
         "active": True,
         "status": state.status,
+        "project_type": state.project_type,
         "current_phase": state.current_phase,
-        "current_phase_label": current.label if current else state.current_phase,
+        "current_phase_label": orchestrator.get_phase_label(state.current_phase, state.project_type),
         "current_unit_index": state.current_unit_index,
         "units": state.units,
+        "unit_label": orchestrator.get_type_config(state.project_type).unit_label,
         "instructions": state.instructions,
         "last_error": state.last_error,
         "phase_results": state.phase_results,
         "unit_results": {str(k): v for k, v in state.unit_results.items()},
+        "all_phase_labels": orchestrator.get_all_phase_labels(state.project_type),
     }
 
 

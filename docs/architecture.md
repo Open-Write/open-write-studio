@@ -164,6 +164,8 @@ POST   /ai/run-assistant
 POST   /ai/editor-chat
 POST   /ai/editor-pass
 POST   /ai/revise-suggestion
+POST   /ai/suggest-scene-breaks
+POST   /ai/generate-quick-overview
 POST   /ai/test-connection
 GET    /ai/models
 ```
@@ -172,7 +174,24 @@ GET    /ai/models
 ```
 GET    /settings
 PUT    /settings
-POST   /settings/openrouter-key
+POST   /settings/test-connection
+POST   /settings/test-provider
+GET    /settings/providers/catalog
+GET    /settings/providers/catalog/{provider_id}
+```
+
+### Names
+```
+GET    /names/random
+GET    /names/pools
+```
+
+### Structure
+```
+GET    /structure/{project_path}
+PUT    /structure/{project_path}
+POST   /structure/{project_path}/assign
+POST   /structure/{project_path}/unassign
 ```
 
 ### Export
